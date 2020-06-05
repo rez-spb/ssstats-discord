@@ -28,7 +28,7 @@ class history
 	 * Variables that shouldn't be tampered with.
 	 */
 	private $activity = [];
-	private $cid = '';
+	private $cid;
 	private $color = [
 		'afternoon' => 'day',
 		'evening' => 'evening',
@@ -36,9 +36,8 @@ class history
 		'night' => 'night'];
 	private $datetime = [];
 	private $l_total = 0;
-	private $output = '';
 
-	public function __construct($cid, $year, $month, $day)
+    public function __construct($cid, $year, $month, $day)
 	{
 		$this->cid = $cid;
 		$this->datetime['month'] = $month;
@@ -146,9 +145,11 @@ class history
 		}
 	}
 
-	/**
-	 * Generate the HTML page.
-	 */
+    /**
+     * Generate the HTML page.
+     * @param $sqlite3
+     * @return string
+     */
 	private function make_html($sqlite3)
 	{
 		if (($daycount = $sqlite3->querySingle('SELECT COUNT(*) FROM channel_activity')) === false) {
@@ -179,8 +180,8 @@ class history
 		/**
 		 * HTML Head.
 		 */
-		$this->output = '<!DOCTYPE html>'."\n\n"
-			. '<html>'."\n\n"
+		$output = '<!DOCTYPE html>'."\n\n"
+			. '<html lang="en">'."\n\n"
 			. '<head>'."\n"
 			. '<meta charset="utf-8">'."\n"
 			. '<title>Statistics for '.htmlspecialchars($this->channel).'</title>'."\n"
@@ -196,8 +197,8 @@ class history
 		 * Activity section.
 		 */
 		$this->get_activity($sqlite3);
-		$this->output .= '<div class="section">Activity</div>'."\n";
-		$this->output .= $this->make_index();
+		$output .= '<div class="section">Activity</div>'."\n";
+		$output .= $this->make_index();
 
 		/**
 		 * Only call make_table_* functions for times in which there was activity.
@@ -220,19 +221,19 @@ class history
 
 			if ($type === 'month') {
 			    # not a typo! Build day history for month
-                $this->output .= $this->make_table_activity($sqlite3, 'day');
+                $output .= $this->make_table_activity($sqlite3, 'day');
             }
-            $this->output .= $this->make_table_activity_distribution_hour($sqlite3, $type);
-			$this->output .= $this->make_table_people($sqlite3, $type);
-			$this->output .= $this->make_table_people_timeofday($sqlite3, $type);
+            $output .= $this->make_table_activity_distribution_hour($sqlite3, $type);
+			$output .= $this->make_table_people($sqlite3, $type);
+			$output .= $this->make_table_people_timeofday($sqlite3, $type);
 		}
 
 		/**
 		 * HTML Foot.
 		 */
-		$this->output .= '<div class="info">Statistics created on '.date('r').'.</div>'."\n";
-		$this->output .= '</div></body>'."\n\n".'</html>'."\n";
-		return $this->output;
+		$output .= '<div class="info">Statistics created on '.date('r').'.</div>'."\n";
+		$output .= '</div></body>'."\n\n".'</html>'."\n";
+		return $output;
 	}
 
 	private function make_index()
@@ -263,6 +264,7 @@ class history
 
     private function make_table_activity($sqlite3, $type)
     {
+        $dates = [];
         $days_in_month = cal_days_in_month(CAL_GREGORIAN, $this->datetime['month'], $this->datetime['year']);
         if ($type === 'day') {
             $class = 'act-day';
@@ -274,11 +276,11 @@ class history
                 $dates[] = date('Y-m-d', mktime(0, 0, 0, $this->datetime['month'], $days_in_month - $i, $this->datetime['year']));
             }
         } else {
-            return;
+            return false;
         }
 
         if (($result = $query->fetchArray(SQLITE3_ASSOC)) === false) {
-            return;
+            return false;
         }
 
         $high_date = '';
@@ -354,6 +356,8 @@ class history
                             $height_li = $height_int['night'] + $height_int['morning'];
                         } elseif ($time === 'night') {
                             $height_li = $height_int['night'];
+                        } else {
+                            $height_li = '';
                         }
 
                         $tr2 .= '<li class="'.$this->color[$time].'" style="height:'.$height_li.'px">';
@@ -379,6 +383,7 @@ class history
 
 	private function make_table_activity_distribution_hour($sqlite3, $type)
 	{
+	    $result = [];
 	    if ($type === 'day') {
             if (($result = $sqlite3->querySingle('SELECT SUM(l_00) AS l_00, SUM(l_01) AS l_01, SUM(l_02) AS l_02, SUM(l_03) AS l_03, SUM(l_04) AS l_04, SUM(l_05) AS l_05, SUM(l_06) AS l_06, SUM(l_07) AS l_07, SUM(l_08) AS l_08, SUM(l_09) AS l_09, SUM(l_10) AS l_10, SUM(l_11) AS l_11, SUM(l_12) AS l_12, SUM(l_13) AS l_13, SUM(l_14) AS l_14, SUM(l_15) AS l_15, SUM(l_16) AS l_16, SUM(l_17) AS l_17, SUM(l_18) AS l_18, SUM(l_19) AS l_19, SUM(l_20) AS l_20, SUM(l_21) AS l_21, SUM(l_22) AS l_22, SUM(l_23) AS l_23 FROM channel_activity WHERE date LIKE \''.date('Y-m-d', mktime(0, 0, 0, $this->datetime['month'], $this->datetime['day'], $this->datetime['year'])).'%\'', true)) === false) {
                 $this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
@@ -433,7 +438,9 @@ class history
 						$time = 'afternoon';
 					} elseif ($hour >= 18 && $hour <= 23) {
 						$time = 'evening';
-					}
+					} else {
+					    $time = false;
+                    }
 
 					$tr2 .= '<li class="'.$this->color[$time].'" style="height:'.$height.'px" title="'.number_format($value).'">';
 				}
@@ -492,6 +499,7 @@ class history
 		while ($result = $query->fetchArray(SQLITE3_ASSOC)) {
 			$i++;
 			$width = 100;
+			$width_int = [];
 
 			foreach ($times as $time) {
 				if ($result['l_'.$time] !== 0) {
@@ -609,19 +617,21 @@ class history
 		return '<table class="ppl-tod">'.$tr0.$tr1.$tr2.$trx.'</table>'."\n";
 	}
 
-	/**
-	 * For compatibility reasons this function has the same name as the original
-	 * version in the base class and accepts the same arguments. Its functionality
-	 * is slightly different in that it exits on any type of message passed to it.
-	 * SQLite3 result code 5 = SQLITE_BUSY, result code 6 = SQLITE_LOCKED.
-	 */
+    /**
+     * For compatibility reasons this function has the same name as the original
+     * version in the base class and accepts the same arguments. Its functionality
+     * is slightly different in that it exits on any type of message passed to it.
+     * SQLite3 result code 5 = SQLITE_BUSY, result code 6 = SQLITE_LOCKED.
+     * @param $code
+     * @param $msg
+     */
 	private function output($code, $msg)
 	{
 		if ($code === 5 || $code === 6) {
 			$msg = 'Statistics are currently being updated, this may take a minute.';
 		}
 
-		exit('<!DOCTYPE html>'."\n\n".'<html><head><meta charset="utf-8"><title>seriously?</title><link rel="stylesheet" href="sss.css"></head><body><div id="container"><div class="error">'.htmlspecialchars($msg).'</div></div></body></html>'."\n");
+		exit('<!DOCTYPE html>'."\n\n".'<html lang="en"><head><meta charset="utf-8"><title>seriously?</title><link rel="stylesheet" href="sss.css"></head><body><div id="container"><div class="error">'.htmlspecialchars($msg).'</div></div></body></html>'."\n");
 	}
 }
 
@@ -630,7 +640,7 @@ class history
  * length.
  */
 if (empty($_GET['cid']) || !preg_match('/^\S{1,32}$/', $_GET['cid'])) {
-	exit('<!DOCTYPE html>'."\n\n".'<html><head><meta charset="utf-8"><title>seriously?</title><link rel="stylesheet" href="sss.css"></head><body><div id="container"><div class="error">Invalid channel ID.</div></div></body></html>'."\n");
+	exit('<!DOCTYPE html>'."\n\n".'<html lang="en"><head><meta charset="utf-8"><title>seriously?</title><link rel="stylesheet" href="sss.css"></head><body><div id="container"><div class="error">Invalid channel ID.</div></div></body></html>'."\n");
 }
 
 $cid = $_GET['cid'];
