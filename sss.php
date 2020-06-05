@@ -318,12 +318,13 @@ class sss
 		}
 
 		while (!feof($fp)) {
-			$line = preg_replace('/\s/', '', fgets($fp));
+			$line = preg_replace('/[\t\r\n\v\f]*/', '', fgets($fp));
 
 			/**
 			 * Skip lines which we can't interpret.
 			 */
-			if (!preg_match('/^[134],\S+(,\S+)*$/', $line)) {
+			if (!preg_match('/^[134],.+?#\d{4}(,.+?#\d{4})*$/', $line)) {
+				output::output('debug', __METHOD__.'(): could not preg_match nicks: \''.$line.'\'');
 				continue;
 			}
 
@@ -363,6 +364,7 @@ class sss
 		$sqlite3->exec('UPDATE uid_details SET ruid = uid, status = 0') or output::output('critical', basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
 
 		foreach ($ruids as $ruid) {
+			output::output('debug', __METHOD__.'(): working on '.$ruid.' with status '.$statuses[$ruid]);
 			$sqlite3->exec('UPDATE uid_details SET status = '.$statuses[$ruid].' WHERE uid = '.$ruid) or output::output('critical', basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
 
 			if (isset($aliases[$ruid])) {

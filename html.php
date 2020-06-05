@@ -16,10 +16,10 @@ class html
 	private $channel = '';
 	private $cid = '';
 	private $color = [
-		'night' => 'b',
-		'morning' => 'g',
-		'afternoon' => 'y',
-		'evening' => 'r'];
+		'night' => 'night',
+		'morning' => 'morning',
+		'afternoon' => 'day',
+		'evening' => 'evening'];
 	private $columns_act_year = 0;
 	private $datetime = [];
 	private $estimate = false;
@@ -109,12 +109,12 @@ class html
 
 		if ($daysago / 365 >= 1) {
 			$daysago = str_replace('.0', '', number_format($daysago / 365, 1));
-			$daysago .= ' Year'.((float) $daysago > 1 ? 's' : '').' Ago';
+			$daysago .= ' year'.((float) $daysago > 1 ? 's' : '').' ago';
 		} elseif ($daysago / 30.42 >= 1) {
 			$daysago = str_replace('.0', '', number_format($daysago / 30.42, 1));
-			$daysago .= ' Month'.((float) $daysago > 1 ? 's' : '').' Ago';
+			$daysago .= ' month'.((float) $daysago > 1 ? 's' : '').' ago';
 		} elseif ($daysago > 1) {
-			$daysago .= ' Days Ago';
+			$daysago .= ' days ago';
 		} elseif ($daysago === (float) 1) {
 			$daysago = 'Yesterday';
 		} elseif ($daysago === (float) 0) {
@@ -200,8 +200,8 @@ class html
 
 		if ($this->columns_act_year < 3) {
 			$this->columns_act_year = 3;
-		} elseif ($this->columns_act_year > 16) {
-			$this->columns_act_year = 24;
+		} elseif ($this->columns_act_year > 10) {
+			$this->columns_act_year = 10;
 		}
 
 		/**
@@ -217,17 +217,19 @@ class html
 			. '<html>'."\n\n"
 			. '<head>'."\n"
 			. '<meta charset="utf-8">'."\n"
-			. '<title>'.htmlspecialchars($this->channel).', seriously.</title>'."\n"
+			. '<title>Statistics for '.htmlspecialchars($this->channel).'</title>'."\n"
 			. '<link rel="stylesheet" href="'.$this->stylesheet.'">'."\n"
 			. '<meta name="referrer" content="no-referrer">'."\n"
 			. '<style type="text/css">'."\n"
-			. '  .act-year { width:'.(2 + ($this->columns_act_year * 34)).'px }'."\n"
+			. '  .act-year { width:'.(2 + ($this->columns_act_year * 25)).'px }'."\n"
 			. '</style>'."\n"
 			. '</head>'."\n\n"
 			. '<body><div id="container">'."\n"
-			. '<div class="info">'.($this->search_user ? '<form action="user.php"><input type="hidden" name="cid" value="'.urlencode($this->cid).'"><input type="text" name="nick" placeholder="Search User.."></form>' : '').htmlspecialchars($this->channel).', seriously.<br><br>'
-			. number_format($dayslogged).' day'.($dayslogged > 1 ? 's logged from '.date('M j, Y', strtotime($date_first)).' to '.date('M j, Y', strtotime($date_last)) : ' logged on '.date('M j, Y', strtotime($date_first))).'.<br><br>'
-			. 'Logs contain '.number_format($this->l_total).' line'.($this->l_total > 1 ? 's' : '').' &ndash; an average of '.number_format($l_avg).' line'.($l_avg !== 1 ? 's' : '').' per day.<br>'
+			. '<h1>Statistics for '.htmlspecialchars($this->channel).'</h1>'
+			. '<h2>gathered by Rez</h2>'
+			. '<div class="info">'.($this->search_user ? '<form action="user.php"><input type="hidden" name="cid" value="'.urlencode($this->cid).'"><input type="text" name="nick" placeholder="Search User.."></form>' : '').''
+			. number_format($dayslogged).' day'.($dayslogged > 1 ? 's logged from '.date('M j, Y', strtotime($date_first)).' to '.date('M j, Y', strtotime($date_last)) : ' logged on '.date('M j, Y', strtotime($date_first))).'.<br/>'
+			. 'Logs contain '.number_format($this->l_total).' line'.($this->l_total > 1 ? 's' : '').' &ndash; an average of '.number_format($l_avg).' line'.($l_avg !== 1 ? 's' : '').' per day.<br/>'
 			. 'Most active day was '.date('M j, Y', strtotime($date_l_max)).' with a total of '.number_format($l_max).' line'.($l_max > 1 ? 's' : '').' typed.</div>'."\n";
 
 		/**
@@ -235,10 +237,12 @@ class html
 		 */
 		if ($this->sectionbits & 1) {
 			$html .= '<div class="section">Activity</div>'."\n";
-			$html .= $this->make_table_activity_distribution_hour($sqlite3);
+/*			$html .= $this->make_table_activity_distribution_hour($sqlite3);
+			$html .= $this->make_table_activity_distribution_day($sqlite3);*/
 			$html .= $this->make_table_activity($sqlite3, 'day');
 			$html .= $this->make_table_activity($sqlite3, 'month');
 			$html .= $this->make_table_activity($sqlite3, 'year');
+			$html .= $this->make_table_activity_distribution_hour($sqlite3);
 			$html .= $this->make_table_activity_distribution_day($sqlite3);
 			$html .= $this->make_table_people($sqlite3, 'alltime');
 			$html .= $this->make_table_people2($sqlite3);
@@ -260,34 +264,34 @@ class html
 		if ($this->sectionbits & 2) {
 			$output = '';
 
-			$t = new table('Most Talkative Chatters', $this->minrows, $this->maxrows);
+			$t = new table('Top lines per day', $this->minrows, $this->maxrows);
 			$t->set_value('keys', [
-				'k1' => 'Lines/Day',
+				'k1' => 'Lines',
 				'k2' => 'User',
 				'v1' => 'float',
 				'v2' => 'string']);
 			$t->set_value('queries', ['main' => 'SELECT CAST(l_total AS REAL) / activedays AS v1, csnick AS v2 FROM ruid_lines JOIN uid_details ON ruid_lines.ruid = uid_details.uid WHERE status NOT IN (3,4) AND activedays >= 7 AND lasttalked >= \''.date('Y-m-d 00:00:00', mktime(0, 0, 0, $this->datetime['month'], $this->datetime['dayofmonth'] - 30, $this->datetime['year'])).'\' ORDER BY v1 DESC, ruid_lines.ruid ASC LIMIT '.$this->maxrows]);
 			$output .= $t->make_table($sqlite3);
 
-			$t = new table('Most Fluent Chatters', $this->minrows, $this->maxrows);
+			$t = new table('Top words in line', $this->minrows, $this->maxrows);
 			$t->set_value('keys', [
-				'k1' => 'Words/Line',
+				'k1' => 'Words',
 				'k2' => 'User',
 				'v1' => 'float',
 				'v2' => 'string']);
 			$t->set_value('queries', ['main' => 'SELECT CAST(words AS REAL) / l_total AS v1, csnick AS v2 FROM ruid_lines JOIN uid_details ON ruid_lines.ruid = uid_details.uid WHERE status NOT IN (3,4) AND activedays >= 7 AND lasttalked >= \''.date('Y-m-d 00:00:00', mktime(0, 0, 0, $this->datetime['month'], $this->datetime['dayofmonth'] - 30, $this->datetime['year'])).'\' ORDER BY v1 DESC, ruid_lines.ruid ASC LIMIT '.$this->maxrows]);
 			$output .= $t->make_table($sqlite3);
 
-			$t = new table('Most Tedious Chatters', $this->minrows, $this->maxrows);
+			$t = new table('Top characters in line', $this->minrows, $this->maxrows);
 			$t->set_value('keys', [
-				'k1' => 'Chars/Line',
+				'k1' => 'Chars',
 				'k2' => 'User',
 				'v1' => 'float',
 				'v2' => 'string']);
 			$t->set_value('queries', ['main' => 'SELECT CAST(characters AS REAL) / l_total AS v1, csnick AS v2 FROM ruid_lines JOIN uid_details ON ruid_lines.ruid = uid_details.uid WHERE status NOT IN (3,4) AND activedays >= 7 AND lasttalked >= \''.date('Y-m-d 00:00:00', mktime(0, 0, 0, $this->datetime['month'], $this->datetime['dayofmonth'] - 30, $this->datetime['year'])).'\' ORDER BY v1 DESC, ruid_lines.ruid ASC LIMIT '.$this->maxrows]);
 			$output .= $t->make_table($sqlite3);
 
-			$t = new table('Individual Top Days &ndash; All-Time', $this->minrows, $this->maxrows);
+			$t = new table('Individual Top Days', $this->minrows, $this->maxrows);
 			$t->set_value('keys', [
 				'k1' => 'Lines',
 				'k2' => 'User',
@@ -314,7 +318,7 @@ class html
 			$t->set_value('queries', ['main' => 'SELECT MAX(l_total) AS v1, csnick AS v2 FROM ruid_activity_by_day JOIN uid_details ON ruid_activity_by_day.ruid = uid_details.uid WHERE status NOT IN (3,4) AND date LIKE \''.date('Y-m', strtotime($date_lastlogparsed)).'%\' GROUP BY ruid_activity_by_day.ruid ORDER BY v1 DESC, ruid_activity_by_day.ruid ASC LIMIT '.$this->maxrows]);
 			$output .= $t->make_table($sqlite3);
 
-			$t = new table('Most Active Chatters &ndash; All-Time', $this->minrows, $this->maxrows);
+			$t = new table('Most Active Chatters', $this->minrows, $this->maxrows);
 			$t->set_value('decimals', 2);
 			$t->set_value('keys', [
 				'k1' => 'Activity',
@@ -403,10 +407,12 @@ class html
 				'k2' => 'User',
 				'v1' => 'int',
 				'v2' => 'string']);
-			$t->set_value('queries', ['main' => 'SELECT topmonologue AS v1, csnick AS v2 FROM ruid_lines JOIN uid_details ON ruid_lines.ruid = uid_details.uid WHERE status NOT IN (3,4) AND topmonologue != 0 ORDER BY v1 DESC, ruid_lines.ruid ASC LIMIT '.$this->maxrows]);
+			$t->set_value('queries', [
+				'main' => 'SELECT topmonologue AS v1, csnick AS v2 FROM ruid_lines JOIN uid_details ON ruid_lines.ruid = uid_details.uid WHERE status NOT IN (3,4) AND topmonologue != 0 ORDER BY v1 DESC, ruid_lines.ruid ASC LIMIT '.$this->maxrows,
+				'total' => 'SELECT SUM(topmonologue) FROM ruid_lines']);
 			$output .= $t->make_table($sqlite3);
 
-			$t = new table('Moodiest People', $this->minrows, $this->maxrows);
+			$t = new table('Emotional People', $this->minrows, $this->maxrows);
 			$t->set_value('keys', [
 				'k1' => 'Smileys',
 				'k2' => 'User',
@@ -792,7 +798,7 @@ class html
 			while ($result = $query->fetchArray(SQLITE3_ASSOC)) {
 				$t = new table('Words of '.$result['length'].' Characters', $this->minrows, $this->maxrows);
 				$t->set_value('keys', [
-					'k1' => 'Times Used',
+					'k1' => 'Count',
 					'k2' => 'Word',
 					'v1' => 'int',
 					'v2' => 'string']);
@@ -833,7 +839,7 @@ class html
 		/**
 		 * HTML Foot.
 		 */
-		$html .= '<div class="info">Statistics created with <a href="http://sss.dutnie.nl">superseriousstats</a> on '.date('r').'.</div>'."\n";
+		$html .= '<div class="info">Statistics created on '.date('r').'.</div>'."\n";
 		$html .= '</div></body>'."\n\n".'</html>'."\n";
 		return $html;
 	}
@@ -841,19 +847,19 @@ class html
 	private function make_table_activity($sqlite3, $type)
 	{
 		if ($type === 'day') {
-			$class = 'act';
-			$columns = 24;
-			$head = 'Activity by Day';
-			$query = $sqlite3->query('SELECT date, l_total, l_night, l_morning, l_afternoon, l_evening FROM channel_activity WHERE date > \''.date('Y-m-d', mktime(0, 0, 0, $this->datetime['month'], $this->datetime['dayofmonth'] - 24, $this->datetime['year'])).'\'') or output::output('critical', basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
+			$class = 'act-day';
+			$columns = 30;
+			$head = 'Daily';
+			$query = $sqlite3->query('SELECT date, l_total, l_night, l_morning, l_afternoon, l_evening FROM channel_activity WHERE date > \''.date('Y-m-d', mktime(0, 0, 0, $this->datetime['month'], $this->datetime['dayofmonth'] - 30, $this->datetime['year'])).'\'') or output::output('critical', basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
 
 			for ($i = $columns - 1; $i >= 0; $i--) {
 				$dates[] = date('Y-m-d', mktime(0, 0, 0, $this->datetime['month'], $this->datetime['dayofmonth'] - $i, $this->datetime['year']));
 			}
 		} elseif ($type === 'month') {
-			$class = 'act';
-			$columns = 24;
-			$head = 'Activity by Month';
-			$query = $sqlite3->query('SELECT SUBSTR(date, 1, 7) AS date, SUM(l_total) AS l_total, SUM(l_night) AS l_night, SUM(l_morning) AS l_morning, SUM(l_afternoon) AS l_afternoon, SUM(l_evening) AS l_evening FROM channel_activity WHERE SUBSTR(date, 1, 7) > \''.date('Y-m', mktime(0, 0, 0, $this->datetime['month'] - 24, 1, $this->datetime['year'])).'\' GROUP BY SUBSTR(date, 1, 7)') or output::output('critical', basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
+			$class = 'act-month';
+			$columns = 12;
+			$head = 'Monthly';
+			$query = $sqlite3->query('SELECT SUBSTR(date, 1, 7) AS date, SUM(l_total) AS l_total, SUM(l_night) AS l_night, SUM(l_morning) AS l_morning, SUM(l_afternoon) AS l_afternoon, SUM(l_evening) AS l_evening FROM channel_activity WHERE SUBSTR(date, 1, 7) > \''.date('Y-m', mktime(0, 0, 0, $this->datetime['month'] - 12, 1, $this->datetime['year'])).'\' GROUP BY SUBSTR(date, 1, 7)') or output::output('critical', basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
 
 			for ($i = $columns - 1; $i >= 0; $i--) {
 				$dates[] = date('Y-m', mktime(0, 0, 0, $this->datetime['month'] - $i, 1, $this->datetime['year']));
@@ -861,8 +867,8 @@ class html
 		} elseif ($type === 'year') {
 			$class = 'act-year';
 			$columns = $this->columns_act_year;
-			$head = 'Activity by Year';
-			$query = $sqlite3->query('SELECT SUBSTR(date, 1, 4) AS date, SUM(l_total) AS l_total, SUM(l_night) AS l_night, SUM(l_morning) AS l_morning, SUM(l_afternoon) AS l_afternoon, SUM(l_evening) AS l_evening FROM channel_activity WHERE SUBSTR(date, 1, 4) > \''.($this->datetime['year'] - 24).'\' GROUP BY SUBSTR(date, 1, 4)') or output::output('critical', basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
+			$head = 'Yearly';
+			$query = $sqlite3->query('SELECT SUBSTR(date, 1, 4) AS date, SUM(l_total) AS l_total, SUM(l_night) AS l_night, SUM(l_morning) AS l_morning, SUM(l_afternoon) AS l_afternoon, SUM(l_evening) AS l_evening FROM channel_activity WHERE SUBSTR(date, 1, 4) > \''.($this->datetime['year'] - 10).'\' GROUP BY SUBSTR(date, 1, 4)') or output::output('critical', basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
 
 			for ($i = $columns - ($this->estimate ? 1 : 0) - 1; $i >= 0; $i--) {
 				$dates[] = $this->datetime['year'] - $i;
@@ -1022,7 +1028,7 @@ class html
 		}
 
 		$times = ['evening', 'afternoon', 'morning', 'night'];
-		$tr1 = '<tr><th colspan="7">Activity Distribution by Day';
+		$tr1 = '<tr><th colspan="7">By day, %';
 		$tr2 = '<tr class="bars">';
 		$tr3 = '<tr class="sub">';
 
@@ -1033,9 +1039,9 @@ class html
 				$percentage = ($l_total[$day] / $this->l_total) * 100;
 
 				if ($percentage >= 9.95) {
-					$percentage = round($percentage).'%';
+					$percentage = round($percentage).'';
 				} else {
-					$percentage = number_format($percentage, 1).'%';
+					$percentage = number_format($percentage, 1).'';
 				}
 
 				$height_int['total'] = (int) round(($l_total[$day] / $high_value) * 100);
@@ -1095,7 +1101,7 @@ class html
 			$tr3 .= '<td'.($day === $high_day ? ' class="bold"' : '').'>'.ucfirst($day);
 		}
 
-		return '<table class="act-day">'.$tr1.$tr2.$tr3.'</table>'."\n";
+		return '<table class="act-day-distrib">'.$tr1.$tr2.$tr3.'</table>'."\n";
 	}
 
 	private function make_table_activity_distribution_hour($sqlite3)
@@ -1114,7 +1120,7 @@ class html
 			}
 		}
 
-		$tr1 = '<tr><th colspan="24">Activity Distribution by Hour';
+		$tr1 = '<tr><th colspan="24">By hour, %';
 		$tr2 = '<tr class="bars">';
 		$tr3 = '<tr class="sub">';
 
@@ -1127,9 +1133,9 @@ class html
 				$percentage = ($value / $this->l_total) * 100;
 
 				if ($percentage >= 9.95) {
-					$percentage = round($percentage).'%';
+					$percentage = round($percentage).'';
 				} else {
-					$percentage = number_format($percentage, 1).'%';
+					$percentage = number_format($percentage, 1).'';
 				}
 
 				$height = round(($value / $high_value) * 100);
@@ -1152,7 +1158,7 @@ class html
 				$tr2 .= '</ul>';
 			}
 
-			$tr3 .= '<td'.($key === $high_key ? ' class="bold"' : '').'>'.$hour.'h';
+			$tr3 .= '<td'.($key === $high_key ? ' class="bold"' : '').'>'.$hour.'';
 		}
 
 		return '<table class="act">'.$tr1.$tr2.$tr3.'</table>'."\n";
@@ -1183,7 +1189,7 @@ class html
 		}
 
 		if ($type === 'alltime') {
-			$head = 'Most Talkative People &ndash; All-Time';
+			$head = 'Most Talkative People';
 			$historylink = '<a href="history.php?cid='.urlencode($this->cid).'">History</a>';
 
 			/**
@@ -1209,16 +1215,16 @@ class html
 		$times = ['night', 'morning', 'afternoon', 'evening'];
 		$tr0 = '<colgroup><col class="c1"><col class="c2"><col class="pos"><col class="c3"><col class="c4"><col class="c5"><col class="c6">';
 		$tr1 = '<tr><th colspan="7">'.($this->history ? '<span class="title">'.$head.'</span><span class="title-right">'.$historylink.'</span>' : $head);
-		$tr2 = '<tr><td class="k1">Percentage<td class="k2">Lines<td class="pos"><td class="k3">User<td class="k4">When?<td class="k5">Last Seen<td class="k6">Quote';
+		$tr2 = '<tr><td class="k1">Percent<td class="k2">Lines<td class="pos"><td class="k3">User<td class="k4">Time<td class="k5">Last Seen<td class="k6">Random Quote';
 		$trx = '';
 
 		while ($result = $query->fetchArray(SQLITE3_ASSOC)) {
 			$i++;
-			$width = 50;
+			$width = 100;
 
 			foreach ($times as $time) {
 				if ($result['l_'.$time] !== 0) {
-					$width_float[$time] = (float) ($result['l_'.$time] / $result['l_total']) * 50;
+					$width_float[$time] = (float) ($result['l_'.$time] / $result['l_total']) * 100;
 					$width_int[$time] = (int) floor($width_float[$time]);
 					$width_remainders[$time] = $width_float[$time] - $width_int[$time];
 					$width -= $width_int[$time];
@@ -1317,7 +1323,8 @@ class html
 
 		$total -= $this->maxrows_people_alltime + ($this->maxrows_people2 * 4);
 		$tr0 = '<colgroup><col class="c1"><col class="pos"><col class="c2"><col class="c1"><col class="pos"><col class="c2"><col class="c1"><col class="pos"><col class="c2"><col class="c1"><col class="pos"><col class="c2">';
-		$tr1 = '<tr><th colspan="12">'.($total !== 0 ? '<span class="title">Less Talkative People &ndash; All-Time</span><span class="title-right">'.number_format($total).' People had even less to say..</span>' : 'Less Talkative People &ndash; All-Time');
+		$tr1 = '<tr><th colspan="12"><span class="title">Less Talkative People</span>';
+		$trf = ($total !== 0 ? '<tr><th colspan="12" class="table-footer">'.number_format($total).' people had even less to say' : '');
 		$tr2 = '<tr><td class="k1">Lines<td class="pos"><td class="k2">User<td class="k1">Lines<td class="pos"><td class="k2">User<td class="k1">Lines<td class="pos"><td class="k2">User<td class="k1">Lines<td class="pos"><td class="k2">User';
 		$trx = '';
 
@@ -1329,7 +1336,7 @@ class html
 			}
 		}
 
-		return '<table class="ppl2">'.$tr0.$tr1.$tr2.$trx.'</table>'."\n";
+		return '<table class="ppl2">'.$tr0.$tr1.$tr2.$trx.$trf.'</table>'."\n";
 	}
 
 	private function make_table_people_timeofday($sqlite3)
@@ -1367,7 +1374,7 @@ class html
 
 		$tr0 = '<colgroup><col class="pos"><col class="c"><col class="c"><col class="c"><col class="c">';
 		$tr1 = '<tr><th colspan="5">Most Talkative People by Time of Day';
-		$tr2 = '<tr><td class="pos"><td class="k">Night<br>0h - 5h<td class="k">Morning<br>6h - 11h<td class="k">Afternoon<br>12h - 17h<td class="k">Evening<br>18h - 23h';
+		$tr2 = '<tr><td class="pos"><td class="k">Night (0 - 5)<td class="k">Morning (6 - 11)<td class="k">Afternoon (12 - 17)<td class="k">Evening (18 - 23)';
 		$trx = '';
 
 		for ($i = 1; $i <= $this->maxrows_people_timeofday; $i++) {
@@ -1381,7 +1388,7 @@ class html
 				if (!isset(${$time}[$i]['lines'])) {
 					$trx .= '<td class="v">';
 				} else {
-					$width = round((${$time}[$i]['lines'] / $high_value) * 190);
+					$width = round((${$time}[$i]['lines'] / $high_value) * 225);
 
 					if ($width !== (float) 0) {
 						$trx .= '<td class="v">'.${$time}[$i]['csnick'].' - '.number_format(${$time}[$i]['lines']).'<br><div class="'.$this->color[$time].'" style="width:'.$width.'px"></div>';

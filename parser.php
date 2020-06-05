@@ -756,7 +756,10 @@ class parser
 	 */
 	private function validate_nick($csnick)
 	{
-		if (preg_match('/^[][^{}|\\\`_a-z][][^{}|\\\`_a-z0-9-]{0,31}$/i', $csnick)) {
+		# original line
+		# if (preg_match('/^[][^{}|\\\`_a-z][][^{}|\\\`_a-z0-9-]{0,31}$/i', $csnick)) {
+		# discord allows more
+		if (preg_match('/^[^@^:^#]{0,64}#\d{4}$/i', $csnick)) {
 			return true;
 		} else {
 			return false;

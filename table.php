@@ -76,12 +76,14 @@ class table
 		 */
 		if ($class === 'small') {
 			$tr0 = '<colgroup><col class="c1"><col class="pos"><col class="c2">';
-			$tr1 = '<tr><th colspan="3">'.(!empty($this->total) ? '<span class="title">'.$this->head.'</span><span class="title-right">'.number_format($this->total).' Total</span>' : $this->head);
+			$tr1 = '<tr><th colspan="3" class="title">'.$this->head;
+			$trf = (!empty($this->total) ? '<tr><th colspan="3" class="table-footer">Total: '.number_format($this->total) : '');
 			$tr2 = '<tr><td class="k1">'.$this->keys['k1'].'<td class="pos"><td class="k2">'.$this->keys['k2'];
 			$trx = '';
 		} else {
 			$tr0 = '<colgroup><col class="c1"><col class="pos"><col class="c2"><col class="c3">';
-			$tr1 = '<tr><th colspan="4">'.(!empty($this->total) ? '<span class="title">'.$this->head.'</span><span class="title-right">'.number_format($this->total).' Total</span>' : $this->head);
+			$tr1 = '<tr><th colspan="4" class="title">'.$this->head;
+			$trf = (!empty($this->total) ? '<tr><th colspan="4" class="table-footer">Total: '.number_format($this->total) : '');
 			$tr2 = '<tr><td class="k1">'.$this->keys['k1'].'<td class="pos"><td class="k2">'.$this->keys['k2'].'<td class="k3">'.$this->keys['k3'];
 			$trx = '';
 		}
@@ -168,6 +170,6 @@ class table
 			}
 		}
 
-		return '<table class="'.$class.'">'.$tr0.$tr1.$tr2.$trx.'</table>'."\n";
+		return '<table class="'.$class.'">'.$tr0.$tr1.$tr2.$trx.$trf.'</table>'."\n";
 	}
 }
