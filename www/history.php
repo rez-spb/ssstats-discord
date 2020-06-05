@@ -16,6 +16,7 @@ class history
 	private $channel = '';
 	private $database = 'sss.db3';
 	private $mainpage = './';
+	private $maxrows_people_day = 10;
 	private $maxrows_people_month = 10;
 	private $maxrows_people_timeofday = 10;
 	private $maxrows_people_year = 10;
@@ -37,11 +38,12 @@ class history
 	private $l_total = 0;
 	private $output = '';
 
-	public function __construct($cid, $year, $month)
+	public function __construct($cid, $year, $month, $day)
 	{
 		$this->cid = $cid;
 		$this->datetime['month'] = $month;
 		$this->datetime['year'] = $year;
+		$this->datetime['day'] = $day;
 
 		/**
 		 * Load settings from vars.php (contained in $settings[]).
@@ -124,15 +126,23 @@ class history
 
 	private function get_activity($sqlite3)
 	{
-		$query = $sqlite3->query('SELECT SUBSTR(date, 1, 4) AS year, CAST(SUBSTR(date, 6, 2) AS INTEGER) AS month, SUM(l_total) AS l_total FROM channel_activity GROUP BY year, month ORDER BY date ASC') or $this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
+		#$query = $sqlite3->query('SELECT SUBSTR(date, 1, 4) AS year, CAST(SUBSTR(date, 6, 2) AS INTEGER) AS month, SUM(l_total) AS l_total FROM channel_activity GROUP BY year, month ORDER BY date ASC') or $this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
+		$query = $sqlite3->query('SELECT SUBSTR(date, 1, 4) AS year, CAST(SUBSTR(date, 6, 2) AS INTEGER) AS month, CAST(SUBSTR(date, 9, 2) AS INTEGER) AS day, SUM(l_total) AS l_total FROM channel_activity GROUP BY year, month, day ORDER BY date ASC;') or $this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
 
 		while ($result = $query->fetchArray(SQLITE3_ASSOC)) {
-			$this->activity[$result['year']][$result['month']] = $result['l_total'];
+			$this->activity[$result['year']][$result['month']][$result['day']] = $result['l_total'];
 
+			# month check
 			if (!isset($this->activity[$result['year']][0])) {
-				$this->activity[$result['year']][0] = 0;
-			}
+                $this->activity[$result['year']][0] = 0;
+            }
+			# day check
+			if (!isset($this->activity[$result['year']][$result['month']][0])) {
+                # there is no day
+                $this->activity[$result['year']][$result['month']][0] = 0;
+            }
 
+			$this->activity[$result['year']][$result['month']][0] += $result['l_total'];
 			$this->activity[$result['year']][0] += $result['l_total'];
 		}
 	}
@@ -200,9 +210,13 @@ class history
 			if (is_null($this->datetime['month'])) {
 				$this->l_total = $this->activity[$this->datetime['year']][0];
 				$type = 'year';
-			} else {
-				$this->l_total = $this->activity[$this->datetime['year']][$this->datetime['month']];
-				$type = 'month';
+			} elseif (is_null($this->datetime['day'])) {
+                $this->l_total = $this->activity[$this->datetime['year']][$this->datetime['month']][0];
+                $type = 'month';
+            }
+			else {
+				$this->l_total = $this->activity[$this->datetime['year']][$this->datetime['month']][$this->datetime['day']];
+				$type = 'day';
 			}
 
 			$this->output .= $this->make_table_activity_distribution_hour($sqlite3, $type);
@@ -231,7 +245,7 @@ class history
 
 				for ($month = 1; $month <= 12; $month++) {
 					if (array_key_exists($month, $this->activity[$year])) {
-						$trx .= '<td class="v"><a href="history.php?cid='.urlencode($this->cid).'&amp;year='.$year.'&amp;month='.$month.'">'.number_format($this->activity[$year][$month]).'</a>';
+						$trx .= '<td class="v"><a href="history.php?cid='.urlencode($this->cid).'&amp;year='.$year.'&amp;month='.$month.'">'.number_format($this->activity[$year][$month][0]).'</a>';
 					} else {
 						$trx .= '<td class="v"><span class="grey">n/a</span>';
 					}
@@ -246,7 +260,11 @@ class history
 
 	private function make_table_activity_distribution_hour($sqlite3, $type)
 	{
-		if ($type === 'month') {
+	    if ($type === 'day') {
+            if (($result = $sqlite3->querySingle('SELECT SUM(l_00) AS l_00, SUM(l_01) AS l_01, SUM(l_02) AS l_02, SUM(l_03) AS l_03, SUM(l_04) AS l_04, SUM(l_05) AS l_05, SUM(l_06) AS l_06, SUM(l_07) AS l_07, SUM(l_08) AS l_08, SUM(l_09) AS l_09, SUM(l_10) AS l_10, SUM(l_11) AS l_11, SUM(l_12) AS l_12, SUM(l_13) AS l_13, SUM(l_14) AS l_14, SUM(l_15) AS l_15, SUM(l_16) AS l_16, SUM(l_17) AS l_17, SUM(l_18) AS l_18, SUM(l_19) AS l_19, SUM(l_20) AS l_20, SUM(l_21) AS l_21, SUM(l_22) AS l_22, SUM(l_23) AS l_23 FROM channel_activity WHERE date LIKE \''.date('Y-m-d', mktime(0, 0, 0, $this->datetime['month'], $this->datetime['day'], $this->datetime['year'])).'%\'', true)) === false) {
+                $this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
+            }
+        } elseif ($type === 'month') {
 			if (($result = $sqlite3->querySingle('SELECT SUM(l_00) AS l_00, SUM(l_01) AS l_01, SUM(l_02) AS l_02, SUM(l_03) AS l_03, SUM(l_04) AS l_04, SUM(l_05) AS l_05, SUM(l_06) AS l_06, SUM(l_07) AS l_07, SUM(l_08) AS l_08, SUM(l_09) AS l_09, SUM(l_10) AS l_10, SUM(l_11) AS l_11, SUM(l_12) AS l_12, SUM(l_13) AS l_13, SUM(l_14) AS l_14, SUM(l_15) AS l_15, SUM(l_16) AS l_16, SUM(l_17) AS l_17, SUM(l_18) AS l_18, SUM(l_19) AS l_19, SUM(l_20) AS l_20, SUM(l_21) AS l_21, SUM(l_22) AS l_22, SUM(l_23) AS l_23 FROM channel_activity WHERE date LIKE \''.date('Y-m', mktime(0, 0, 0, $this->datetime['month'], 1, $this->datetime['year'])).'%\'', true)) === false) {
 				$this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
 			}
@@ -316,7 +334,11 @@ class history
 		 * Only create the table if there is activity from users other than bots and
 		 * excluded users.
 		 */
-		if ($type === 'month') {
+		if ($type === 'day') {
+            if (($total = $sqlite3->querySingle('SELECT SUM(l_total) FROM ruid_activity_by_day JOIN uid_details ON ruid_activity_by_day.ruid = uid_details.uid WHERE status NOT IN (3,4) AND date = \''.date('Y-m-d', mktime(0, 0, 0, $this->datetime['month'], $this->datetime['day'], $this->datetime['year'])).'\'')) === false) {
+                $this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
+            }
+        } elseif ($type === 'month') {
 			if (($total = $sqlite3->querySingle('SELECT SUM(l_total) FROM ruid_activity_by_month JOIN uid_details ON ruid_activity_by_month.ruid = uid_details.uid WHERE status NOT IN (3,4) AND date = \''.date('Y-m', mktime(0, 0, 0, $this->datetime['month'], 1, $this->datetime['year'])).'\'')) === false) {
 				$this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
 			}
@@ -330,7 +352,10 @@ class history
 			return null;
 		}
 
-		if ($type === 'month') {
+		if ($type === 'day') {
+		    $head = 'Most Talkative People &ndash; '.$this->datetime['day'].' '.$this->datetime['monthname'].' '.$this->datetime['year'];
+            $query = $sqlite3->query('SELECT csnick, ruid_activity_by_day.l_total AS l_total, ruid_activity_by_day.l_night AS l_night, ruid_activity_by_day.l_morning AS l_morning, ruid_activity_by_day.l_afternoon AS l_afternoon, ruid_activity_by_day.l_evening AS l_evening, quote, (SELECT MAX(lastseen) FROM uid_details WHERE ruid = ruid_activity_by_day.ruid) AS lastseen FROM ruid_activity_by_day JOIN uid_details ON ruid_activity_by_day.ruid = uid_details.uid JOIN ruid_lines ON ruid_activity_by_day.ruid = ruid_lines.ruid WHERE status NOT IN (3,4) AND date = \''.date('Y-m-d', mktime(0, 0, 0, $this->datetime['month'], $this->datetime['day'], $this->datetime['year'])).'\' ORDER BY l_total DESC, ruid_activity_by_day.ruid ASC LIMIT '.$this->maxrows_people_day) or $this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
+        } elseif ($type === 'month') {
 			$head = 'Most Talkative People &ndash; '.$this->datetime['monthname'].' '.$this->datetime['year'];
 			$query = $sqlite3->query('SELECT csnick, ruid_activity_by_month.l_total AS l_total, ruid_activity_by_month.l_night AS l_night, ruid_activity_by_month.l_morning AS l_morning, ruid_activity_by_month.l_afternoon AS l_afternoon, ruid_activity_by_month.l_evening AS l_evening, quote, (SELECT MAX(lastseen) FROM uid_details WHERE ruid = ruid_activity_by_month.ruid) AS lastseen FROM ruid_activity_by_month JOIN uid_details ON ruid_activity_by_month.ruid = uid_details.uid JOIN ruid_lines ON ruid_activity_by_month.ruid = ruid_lines.ruid WHERE status NOT IN (3,4) AND date = \''.date('Y-m', mktime(0, 0, 0, $this->datetime['month'], 1, $this->datetime['year'])).'\' ORDER BY l_total DESC, ruid_activity_by_month.ruid ASC LIMIT '.$this->maxrows_people_month) or $this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
 		} elseif ($type === 'year') {
@@ -392,7 +417,11 @@ class history
 		 * Only create the table if there is activity from users other than bots and
 		 * excluded users.
 		 */
-		if ($type === 'month') {
+		if ($type === 'day') {
+            if (($total = $sqlite3->querySingle('SELECT SUM(l_total) FROM ruid_activity_by_day JOIN uid_details ON ruid_activity_by_day.ruid = uid_details.uid WHERE status NOT IN (3,4) AND date = \''.date('Y-m-d', mktime(0, 0, 0, $this->datetime['month'], $this->datetime['day'], $this->datetime['year'])).'\'')) === false) {
+                $this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
+            }
+        } elseif ($type === 'month') {
 			if (($total = $sqlite3->querySingle('SELECT SUM(l_total) FROM ruid_activity_by_month JOIN uid_details ON ruid_activity_by_month.ruid = uid_details.uid WHERE status NOT IN (3,4) AND date = \''.date('Y-m', mktime(0, 0, 0, $this->datetime['month'], 1, $this->datetime['year'])).'\'')) === false) {
 				$this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
 			}
@@ -410,7 +439,9 @@ class history
 		$times = ['night', 'morning', 'afternoon', 'evening'];
 
 		foreach ($times as $time) {
-			if ($type === 'month') {
+			if ($type === 'day') {
+                $query = $sqlite3->query('SELECT csnick, l_'.$time.' FROM ruid_activity_by_day JOIN uid_details ON ruid_activity_by_day.ruid = uid_details.uid WHERE date = \''.date('Y-m-d', mktime(0, 0, 0, $this->datetime['month'], $this->datetime['day'], $this->datetime['year'])).'\' AND status NOT IN (3,4) AND l_'.$time.' != 0 ORDER BY l_'.$time.' DESC, ruid_activity_by_day.ruid ASC LIMIT '.$this->maxrows_people_timeofday) or $this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
+            } elseif ($type === 'month') {
 				$query = $sqlite3->query('SELECT csnick, l_'.$time.' FROM ruid_activity_by_month JOIN uid_details ON ruid_activity_by_month.ruid = uid_details.uid WHERE date = \''.date('Y-m', mktime(0, 0, 0, $this->datetime['month'], 1, $this->datetime['year'])).'\' AND status NOT IN (3,4) AND l_'.$time.' != 0 ORDER BY l_'.$time.' DESC, ruid_activity_by_month.ruid ASC LIMIT '.$this->maxrows_people_timeofday) or $this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
 			} elseif ($type === 'year') {
 				$query = $sqlite3->query('SELECT csnick, l_'.$time.' FROM ruid_activity_by_year JOIN uid_details ON ruid_activity_by_year.ruid = uid_details.uid WHERE date = \''.$this->datetime['year'].'\' AND status NOT IN (3,4) AND l_'.$time.' != 0 ORDER BY l_'.$time.' DESC, ruid_activity_by_year.ruid ASC LIMIT '.$this->maxrows_people_timeofday) or $this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
@@ -493,15 +524,22 @@ if (isset($_GET['year']) && preg_match('/^[12][0-9]{3}$/', $_GET['year'])) {
 
 	if (isset($_GET['month']) && preg_match('/^([1-9]|1[0-2])$/', $_GET['month'])) {
 		$month = (int) $_GET['month'];
+
 	} else {
 		$month = null;
 	}
+    if (isset($_GET['day']) && preg_match('/^([1-9]|[1-3][0-9])$/', $_GET['day'])) {
+        $day = (int) $_GET['day'];
+    } else {
+        $day = null;
+    }
 } else {
 	$month = null;
 	$year = null;
+	$day = null;
 }
 
 /**
  * Make stats!
  */
-$history = new history($cid, $year, $month);
+$history = new history($cid, $year, $month, $day);
