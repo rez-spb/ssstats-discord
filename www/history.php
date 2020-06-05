@@ -219,11 +219,11 @@ class history
 				$type = 'day';
 			}
 
-			$this->output .= $this->make_table_activity_distribution_hour($sqlite3, $type);
 			if ($type === 'month') {
 			    # not a typo! Build day history for month
                 $this->output .= $this->make_table_activity($sqlite3, 'day');
             }
+            $this->output .= $this->make_table_activity_distribution_hour($sqlite3, $type);
 			$this->output .= $this->make_table_people($sqlite3, $type);
 			$this->output .= $this->make_table_people_timeofday($sqlite3, $type);
 		}
@@ -371,7 +371,7 @@ class history
             }
 
             if ($type === 'day') {
-                $tr3 .= '<td'.($date === $high_date ? ' class="bold"' : '').'>'.date('D', strtotime($date)).'<br>'.date('j', strtotime($date));
+                $tr3 .= '<td'.($date === $high_date ? ' class="bold"' : '').'><a href="history.php?cid='.urlencode($this->cid).'&amp;year='.$this->datetime['year'].'&amp;month='.$this->datetime['month'].'&amp;day='.date('j', strtotime($date)).'">'.date('D', strtotime($date)).'<br>'.date('j', strtotime($date)).'</a>';
             }
         }
 
