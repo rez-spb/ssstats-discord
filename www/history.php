@@ -126,7 +126,6 @@ class history
 
 	private function get_activity($sqlite3)
 	{
-		#$query = $sqlite3->query('SELECT SUBSTR(date, 1, 4) AS year, CAST(SUBSTR(date, 6, 2) AS INTEGER) AS month, SUM(l_total) AS l_total FROM channel_activity GROUP BY year, month ORDER BY date ASC') or $this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
 		$query = $sqlite3->query('SELECT SUBSTR(date, 1, 4) AS year, CAST(SUBSTR(date, 6, 2) AS INTEGER) AS month, CAST(SUBSTR(date, 9, 2) AS INTEGER) AS day, SUM(l_total) AS l_total FROM channel_activity GROUP BY year, month, day ORDER BY date ASC;') or $this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
 
 		while ($result = $query->fetchArray(SQLITE3_ASSOC)) {
@@ -442,7 +441,7 @@ class history
 				$tr2 .= '</ul>';
 			}
 
-			$tr3 .= '<td'.($key === $high_key ? ' class="bold"' : '').'>'.$hour.'h';
+			$tr3 .= '<td'.($key === $high_key ? ' class="bold"' : '').'>'.$hour;
 		}
 
 		return '<table class="act">'.$tr1.$tr2.$tr3.'</table>'."\n";
