@@ -1,0 +1,509 @@
+/**
+ * Assorted global styling
+ */
+a {
+	color:#333;
+	font-style:normal;
+}
+a:hover {
+	text-decoration:none;
+}
+body {
+	background-color:#F9F9F9;
+	margin:0 auto;
+	width:840px;
+}
+#container {
+	float:left;
+}
+.error {
+	background-color:#FFE0E0;
+	border-color:#CC0000;
+	border-style:solid;
+	border-width:3px 1px 1px;
+	color:#666;
+	float:left;
+	font-family:verdana,sans-serif;
+	font-size:10px;
+	font-weight:bold;
+	margin:30px 222px 15px 200px;
+	padding:5px;
+	text-align:center;
+	width:416px;
+}
+form {
+	float:right;
+}
+.green {
+	color:#70A35E;
+}
+.grey {
+	color:#999;
+}
+.info {
+	width:818px;
+}
+.info,
+.section {
+	color:#666;
+	float:left;
+	font-family:verdana,sans-serif;
+	font-size:12px;
+	font-weight:bold;
+	margin:15px 22px 7px 0;
+}
+input {
+	background-color:#F9F9F9;
+	border:1px solid #E0E0E0;
+	color:#333;
+	font-family:verdana,sans-serif;
+	font-size:10px;
+	font-style:italic;
+	margin-left:3px;
+	padding:1px;
+	width:120px;
+}
+.note {
+	font-style:italic;
+	font-weight:normal;
+}
+.red {
+	color:#C74243;
+}
+.section {
+	border:1px solid #E0E0E0;
+	padding:1px 0;
+	text-align:center;
+	width:816px;
+}
+.title {
+	float:left;
+}
+.title-right {
+	float:right;
+	font-style:italic;
+	font-weight:normal;
+}
+.userpic {
+	float:right;
+	height:80px;
+	padding:2px 1px;
+	width:80px;
+}
+/**
+ * Graph colors
+ */
+.b {
+	background-color:#416D9C;
+}
+.g {
+	background-color:#70A35E;
+}
+.r {
+	background-color:#C74243;
+}
+.y {
+	background-color:#EBB056;
+}
+/**
+ * Global table styling
+ */
+table {
+	background-color:#EEE;
+	border-collapse:separate;
+	border-color:#666;
+	border-spacing:0;
+	border-style:solid;
+	border-width:3px 1px 1px;
+	float:left;
+	margin:15px 22px 7px 0;
+	table-layout:fixed;
+}
+td {
+	color:#333;
+	padding:1px 0;
+	vertical-align:top;
+}
+td,
+th {
+	font-family:verdana,sans-serif;
+	font-size:10px;
+}
+th {
+	color:#666;
+	padding:1px 3px;
+	text-align:left;
+}
+/**
+ * Specific table styling: activity graphs
+ */
+.act {
+	width:818px;
+}
+.act-day {
+	width:240px;
+}
+.act-year {
+	/**
+	 * Variable width specified in HTML
+	 */
+}
+.act li,
+.act-day li,
+.act-year li {
+	bottom:0;
+	display:block;
+	position:absolute;
+}
+.act li.num,
+.act-day li.num,
+.act-year li.num {
+	text-align:center;
+	width:34px;
+}
+.act li.b,
+.act li.g,
+.act li.r,
+.act li.y,
+.act-day li.b,
+.act-day li.g,
+.act-day li.r,
+.act-day li.y,
+.act-year li.b,
+.act-year li.g,
+.act-year li.r,
+.act-year li.y {
+	margin-left:9px;
+	width:16px;
+}
+.act td,
+.act-day td,
+.act-year td {
+	text-align:center;
+}
+.act-year td.est {
+	opacity:0.6;
+}
+.act tr.bars td,
+.act-day tr.bars td,
+.act-year tr.bars td {
+	height:124px;
+	padding:0;
+	vertical-align:bottom;
+}
+.act tr.sub td,
+.act-day tr.sub td,
+.act-year tr.sub td {
+	background-color:#E0E0E0;
+	color:#999;
+	font-weight:bold;
+}
+.act tr.sub td.bold,
+.act-day tr.sub td.bold,
+.act-year tr.sub td.bold {
+	color:#666;
+}
+.act ul,
+.act-day ul,
+.act-year ul {
+	height:124px;
+	margin:0;
+	padding:0;
+	position:relative;
+}
+/**
+ * Specific table styling: history index
+ */
+.index {
+	width:818px;
+}
+.index col.c {
+	width:65px;
+}
+.index col.pos {
+	width:36px;
+}
+.index td.k,
+.index td.pos {
+	background-color:#E0E0E0;
+	color:#999;
+	font-weight:bold;
+}
+.index td.k,
+.index td.v {
+	padding-right:2px;
+	text-align:right;
+}
+.index td.pos {
+	text-align:center;
+}
+/**
+ * Specific table styling: most talkative people
+ */
+.ppl {
+	width:818px;
+}
+.ppl col.c1,
+.ppl col.c2 {
+	width:80px;
+}
+.ppl col.c3 {
+	width:140px;
+}
+.ppl col.c4 {
+	width:54px;
+}
+.ppl col.c5 {
+	width:100px;
+}
+.ppl col.c6 {
+	width:326px;
+}
+.ppl col.pos {
+	width:36px;
+}
+.ppl li {
+	display:inline-block;
+	height:6px;
+	margin-top:4px;
+}
+.ppl td.k1,
+.ppl td.k2,
+.ppl td.k3,
+.ppl td.k4,
+.ppl td.k5,
+.ppl td.k6,
+.ppl td.pos {
+	background-color:#E0E0E0;
+	color:#999;
+	font-weight:bold;
+}
+.ppl td.k1,
+.ppl td.k2,
+.ppl td.v1,
+.ppl td.v2 {
+	padding-right:2px;
+	text-align:right;
+}
+.ppl td.k3,
+.ppl td.k5,
+.ppl td.k6,
+.ppl td.v3,
+.ppl td.v5,
+.ppl td.v6 {
+	padding-left:2px;
+}
+.ppl td.pos {
+	text-align:center;
+}
+.ppl td.v6 {
+	overflow:hidden;
+	text-overflow:ellipsis;
+	white-space:nowrap;
+}
+.ppl ul {
+	margin:0;
+	padding:0;
+}
+/**
+ * Specific table styling: less talkative people
+ */
+.ppl2 {
+	width:818px;
+}
+.ppl2 col.c1 {
+	width:55px;
+}
+.ppl2 col.c2 {
+	width:125px;
+}
+.ppl2 col.pos {
+	width:24px;
+}
+.ppl2 td.k1,
+.ppl2 td.k2,
+.ppl2 td.pos {
+	background-color:#E0E0E0;
+	color:#999;
+	font-weight:bold;
+}
+.ppl2 td.k1,
+.ppl2 td.v1 {
+	padding-right:2px;
+	text-align:right;
+}
+.ppl2 td.k2,
+.ppl2 td.v2 {
+	padding-left:2px;
+}
+.ppl2 td.pos {
+	text-align:center;
+}
+/**
+ * Specific table styling: people by time of day
+ */
+.ppl-tod {
+	width:818px;
+}
+.ppl-tod col.c {
+	width:197px;
+}
+.ppl-tod col.pos {
+	width:28px;
+}
+.ppl-tod div {
+	float:right;
+	height:6px;
+	margin-top:2px;
+}
+.ppl-tod td.k,
+.ppl-tod td.pos {
+	background-color:#E0E0E0;
+	color:#999;
+	font-weight:bold;
+}
+.ppl-tod td.k,
+.ppl-tod td.v {
+	padding-right:2px;
+	text-align:right;
+}
+.ppl-tod td.pos {
+	text-align:center;
+}
+.ppl-tod td.v {
+	height:3em;
+	padding-bottom:0;
+}
+/**
+ * Specific table styling: large, medium, small
+ */
+.large {
+	width:818px;
+}
+.medium {
+	width:538px;
+}
+.small {
+	width:258px;
+}
+.large col.c1,
+.medium col.c1,
+.medium col.c3,
+.small col.c1 {
+	width:80px;
+}
+.large col.c2,
+.small col.c2 {
+	width:140px;
+}
+.large col.c3 {
+	width:560px;
+}
+.medium col.c2 {
+	width:340px;
+}
+.large col.pos,
+.medium col.pos,
+.small col.pos {
+	width:36px;
+}
+.large td.k1,
+.large td.k2,
+.large td.k3,
+.large td.pos,
+.medium td.k1,
+.medium td.k2,
+.medium td.k3,
+.medium td.pos,
+.small td.k1,
+.small td.k2,
+.small td.pos {
+	background-color:#E0E0E0;
+	color:#999;
+	font-weight:bold;
+}
+.large td.k1,
+.large td.v1,
+.medium td.k1,
+.medium td.k3,
+.medium td.v1,
+.medium td.v3,
+.small td.k1,
+.small td.v1 {
+	padding-right:2px;
+	text-align:right;
+}
+.large td.k2,
+.large td.k3,
+.large td.v2,
+.large td.v3,
+.large td.v3a,
+.medium td.k2,
+.medium td.v2,
+.small td.k2,
+.small td.v2 {
+	padding-left:2px;
+}
+.large td.pos,
+.medium td.pos,
+.small td.pos {
+	text-align:center;
+}
+.large td.v3 {
+	overflow:hidden;
+	text-overflow:ellipsis;
+	white-space:nowrap;
+}
+/**
+ * Specific table styling: rankings
+ */
+.rank {
+	width:818px;
+}
+.rank col.c1,
+.rank col.c2 {
+	width:45px;
+}
+.rank col.c3 {
+	width:78px;
+}
+.rank col.c4,
+.rank col.c5,
+.rank col.c6,
+.rank col.c7,
+.rank col.c8,
+.rank col.c9,
+.rank col.c10,
+.rank col.c11,
+.rank col.c12 {
+	width:72px;
+}
+.rank td.k1-2,
+.rank td.k3,
+.rank td.k4-5,
+.rank td.k6-7,
+.rank td.k8-9,
+.rank td.k10-11,
+.rank td.k12,
+.rank td.v3 {
+	background-color:#E0E0E0;
+	color:#999;
+	font-weight:bold;
+	text-align:center;
+}
+.rank td.v1,
+.rank td.v4,
+.rank td.v6,
+.rank td.v8,
+.rank td.v10,
+.rank td.v12 {
+	padding-right:2px;
+	text-align:right;
+}
+.rank td.v2,
+.rank td.v5,
+.rank td.v7,
+.rank td.v9,
+.rank td.v11 {
+	padding-left:2px;
+}
