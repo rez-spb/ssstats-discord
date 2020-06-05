@@ -1,33 +1,26 @@
-<img alt="superseriousstats" align="right" src="http://sss.dutnie.nl/superseriousstats-small.png">
+# ssstats-discord
+Custom version of SuperSeriousStats by Jos de Ruijter.  
+Forked from [original GitHub repository](https://github.com/tommyrot/superseriousstats). Please see original's description and copyright.
 
-superseriousstats
-=================
-A small and efficient program written in PHP to create HTML pages with statistics out of various types of IRC logs.
+## Reasons
+I mostly needed something that will take in Discord logs (converted to IRC format), and build stats page. 
+This project used PHP and had low supported version and pretty much most of the work done, so I decided to 
+fork it if I succeed in adding a new parser.  
 
-[Official site with info and guide](http://sss.dutnie.nl)
+## Why so much rework
+IRC had its own rules for nicknames, which were hardcoded as regex into SSS. So in order to make this work 
+I had to loosen the security and rewrite all the nicknames parsing parts. Tried to make as few modifications 
+as possible, but still that was incompatible with the original.  
 
-[Examples of community created stats](https://www.raylu.net/irc/)
+After that I decided that I should redo the output format to allow for bigger screens than 1024x768, 
+because on 1080p it looks so small with one column in the center. The column was nicely formatted and it 
+was a hard decision, but people just complained about so much wasted space. While I reorganized, it became 
+clear that some decisions were made in code to maintain `840px` wide width, so I reverted them. And of 
+course the design will be changed mostly for my needs, and afterwards if I have time I will try to make 
+it out as a separate compatible module for more customization freedom, but that's not a priority.  
 
-download
---------
-Either latest release or checkout current master branch which always aims to be in working condition. The **80dev branch** requires php74 with sqlite3 and mbstring extensions compiled in and **is not** guaranteed to work at all or ever.
+## License
+Most part of the code can be used under the original license of SSS. 
+My reworks are LGPLv3 licenced, so use them, improve them, well, the usual.  
 
-*feel free to join us in #superseriousstats on chat.freenode.net if you have any questions etc*
-
-license
--------
-```
-Copyright (c) 2007-2019, Jos de Ruijter
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted, provided that the above
-copyright notice and this permission notice appear in all copies.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-```
+Rez.
