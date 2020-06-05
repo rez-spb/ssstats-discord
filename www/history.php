@@ -220,6 +220,10 @@ class history
 			}
 
 			$this->output .= $this->make_table_activity_distribution_hour($sqlite3, $type);
+			if ($type === 'month') {
+			    # not a typo! Build day history for month
+                $this->output .= $this->make_table_activity($sqlite3, 'day');
+            }
 			$this->output .= $this->make_table_people($sqlite3, $type);
 			$this->output .= $this->make_table_people_timeofday($sqlite3, $type);
 		}
@@ -257,6 +261,122 @@ class history
 
 		return '<table class="index">'.$tr0.$tr1.$tr2.$trx.'</table>'."\n";
 	}
+
+    private function make_table_activity($sqlite3, $type)
+    {
+        $days_in_month = cal_days_in_month(CAL_GREGORIAN, $this->datetime['month'], $this->datetime['year']);
+        if ($type === 'day') {
+            $class = 'act-day';
+            $columns = $days_in_month;
+            $head = 'Daily';
+            $query = $sqlite3->query('SELECT date, l_total, l_night, l_morning, l_afternoon, l_evening FROM channel_activity WHERE date > \''.date('Y-m-d', mktime(0, 0, 0, $this->datetime['month'], 0, $this->datetime['year'])).'\'') or output::output('critical', basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
+
+            for ($i = $columns - 1; $i >= 0; $i--) {
+                $dates[] = date('Y-m-d', mktime(0, 0, 0, $this->datetime['month'], $days_in_month - $i, $this->datetime['year']));
+            }
+        } else {
+            return;
+        }
+
+        if (($result = $query->fetchArray(SQLITE3_ASSOC)) === false) {
+            return;
+        }
+
+        $high_date = '';
+        $high_value = 0;
+        $query->reset();
+
+        while ($result = $query->fetchArray(SQLITE3_ASSOC)) {
+            $l_afternoon[$result['date']] = $result['l_afternoon'];
+            $l_evening[$result['date']] = $result['l_evening'];
+            $l_morning[$result['date']] = $result['l_morning'];
+            $l_night[$result['date']] = $result['l_night'];
+            $l_total[$result['date']] = $result['l_total'];
+
+            if ($result['l_total'] > $high_value) {
+                $high_date = $result['date'];
+                $high_value = $result['l_total'];
+            }
+        }
+
+        $times = ['evening', 'afternoon', 'morning', 'night'];
+        $tr1 = '<tr><th colspan="'.$columns.'">'.$head;
+        $tr2 = '<tr class="bars">';
+        $tr3 = '<tr class="sub">';
+
+        foreach ($dates as $date) {
+            if (!array_key_exists($date, $l_total)) {
+                $tr2 .= '<td><span class="grey">n/a</span>';
+            } else {
+                if ($l_total[$date] >= 999500) {
+                    $total = number_format($l_total[$date] / 1000000, 1).'M';
+                } elseif ($l_total[$date] >= 10000) {
+                    $total = round($l_total[$date] / 1000).'k';
+                } else {
+                    $total = $l_total[$date];
+                }
+
+                $height_int['total'] = (int) round(($l_total[$date] / $high_value) * 100);
+                $height = $height_int['total'];
+
+                foreach ($times as $time) {
+                    if (${'l_'.$time}[$date] !== 0) {
+                        $height_float[$time] = (float) (${'l_'.$time}[$date] / $high_value) * 100;
+                        $height_int[$time] = (int) floor($height_float[$time]);
+                        $height_remainders[$time] = $height_float[$time] - $height_int[$time];
+                        $height -= $height_int[$time];
+                    } else {
+                        $height_int[$time] = 0;
+                    }
+                }
+
+                if ($height !== 0) {
+                    arsort($height_remainders);
+
+                    foreach ($height_remainders as $time => $remainder) {
+                        $height--;
+                        $height_int[$time]++;
+
+                        if ($height === 0) {
+                            break;
+                        }
+                    }
+                }
+
+                $tr2 .= '<td'.($date === 'estimate' ? ' class="est"' : '').'><ul><li class="num" style="height:'.($height_int['total'] + 14).'px">'.$total;
+
+                foreach ($times as $time) {
+                    if ($height_int[$time] !== 0) {
+                        if ($time === 'evening') {
+                            $height_li = $height_int['night'] + $height_int['morning'] + $height_int['afternoon'] + $height_int['evening'];
+                        } elseif ($time === 'afternoon') {
+                            $height_li = $height_int['night'] + $height_int['morning'] + $height_int['afternoon'];
+                        } elseif ($time === 'morning') {
+                            $height_li = $height_int['night'] + $height_int['morning'];
+                        } elseif ($time === 'night') {
+                            $height_li = $height_int['night'];
+                        }
+
+                        $tr2 .= '<li class="'.$this->color[$time].'" style="height:'.$height_li.'px">';
+                    }
+                }
+
+                $tr2 .= '</ul>';
+
+                /**
+                 * It's important to unset $height_remainders so the next iteration won't try to
+                 * work with old values.
+                 */
+                unset($height_remainders);
+            }
+
+            if ($type === 'day') {
+                $tr3 .= '<td'.($date === $high_date ? ' class="bold"' : '').'>'.date('D', strtotime($date)).'<br>'.date('j', strtotime($date));
+            }
+        }
+
+        return '<table class="'.$class.'">'.$tr1.$tr2.$tr3.'</table>'."\n";
+    }
 
 	private function make_table_activity_distribution_hour($sqlite3, $type)
 	{
