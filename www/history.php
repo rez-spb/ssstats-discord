@@ -29,10 +29,10 @@ class history
 	private $activity = [];
 	private $cid = '';
 	private $color = [
-		'afternoon' => 'y',
-		'evening' => 'r',
-		'morning' => 'g',
-		'night' => 'b'];
+		'afternoon' => 'day',
+		'evening' => 'evening',
+		'morning' => 'morning',
+		'night' => 'night'];
 	private $datetime = [];
 	private $l_total = 0;
 	private $output = '';
@@ -107,12 +107,12 @@ class history
 
 		if ($daysago / 365 >= 1) {
 			$daysago = str_replace('.0', '', number_format($daysago / 365, 1));
-			$daysago .= ' Year'.((float) $daysago > 1 ? 's' : '').' Ago';
+			$daysago .= ' year'.((float) $daysago > 1 ? 's' : '').' ago';
 		} elseif ($daysago / 30.42 >= 1) {
 			$daysago = str_replace('.0', '', number_format($daysago / 30.42, 1));
-			$daysago .= ' Month'.((float) $daysago > 1 ? 's' : '').' Ago';
+			$daysago .= ' month'.((float) $daysago > 1 ? 's' : '').' ago';
 		} elseif ($daysago > 1) {
-			$daysago .= ' Days Ago';
+			$daysago .= ' days ago';
 		} elseif ($daysago === (float) 1) {
 			$daysago = 'Yesterday';
 		} elseif ($daysago === (float) 0) {
@@ -174,11 +174,13 @@ class history
 			. '<html>'."\n\n"
 			. '<head>'."\n"
 			. '<meta charset="utf-8">'."\n"
-			. '<title>'.htmlspecialchars($this->channel).', historically.</title>'."\n"
+			. '<title>Statistics for '.htmlspecialchars($this->channel).'</title>'."\n"
 			. '<link rel="stylesheet" href="'.$this->stylesheet.'">'."\n"
 			. '</head>'."\n\n"
 			. '<body><div id="container">'."\n"
-			. '<div class="info"><a href="'.htmlspecialchars($this->mainpage).'">'.htmlspecialchars($this->channel).'</a>, historically.<br><br>'
+			. '<h1>Historical page for '.htmlspecialchars($this->channel).'</h1>'
+			. '<h2>gathered by Rez</h2>'
+			. '<div class="info"><a href="'.htmlspecialchars($this->mainpage).'">Main page of '.htmlspecialchars($this->channel).'</a><br/><br/>'
 			. (is_null($this->datetime['year']) ? '<span class="note">Select a year and/or month in the matrix below.</span>' : 'Displaying statistics for '.(!is_null($this->datetime['month']) ? $this->datetime['monthname'].' '.$this->datetime['year'] : 'the year '.$this->datetime['year']).'.').'</div>'."\n";
 
 		/**
@@ -211,7 +213,7 @@ class history
 		/**
 		 * HTML Foot.
 		 */
-		$this->output .= '<div class="info">Statistics created with <a href="http://sss.dutnie.nl">superseriousstats</a> on '.date('r').'.</div>'."\n";
+		$this->output .= '<div class="info">Statistics created on '.date('r').'.</div>'."\n";
 		$this->output .= '</div></body>'."\n\n".'</html>'."\n";
 		return $this->output;
 	}
@@ -264,7 +266,7 @@ class history
 			}
 		}
 
-		$tr1 = '<tr><th colspan="24">Activity Distribution by Hour';
+		$tr1 = '<tr><th colspan="24">By hour, %';
 		$tr2 = '<tr class="bars">';
 		$tr3 = '<tr class="sub">';
 
@@ -277,9 +279,9 @@ class history
 				$percentage = ($value / $this->l_total) * 100;
 
 				if ($percentage >= 9.95) {
-					$percentage = round($percentage).'%';
+					$percentage = round($percentage);
 				} else {
-					$percentage = number_format($percentage, 1).'%';
+					$percentage = number_format($percentage, 1);
 				}
 
 				$height = round(($value / $high_value) * 100);
@@ -340,16 +342,16 @@ class history
 		$times = ['night', 'morning', 'afternoon', 'evening'];
 		$tr0 = '<colgroup><col class="c1"><col class="c2"><col class="pos"><col class="c3"><col class="c4"><col class="c5"><col class="c6">';
 		$tr1 = '<tr><th colspan="7">'.$head;
-		$tr2 = '<tr><td class="k1">Percentage<td class="k2">Lines<td class="pos"><td class="k3">User<td class="k4">When?<td class="k5">Last Seen<td class="k6">Quote';
+		$tr2 = '<tr><td class="k1">Percent<td class="k2">Lines<td class="pos"><td class="k3">User<td class="k4">Time<td class="k5">Last Seen<td class="k6">Last Quote';
 		$trx = '';
 
 		while ($result = $query->fetchArray(SQLITE3_ASSOC)) {
 			$i++;
-			$width = 50;
+			$width = 100;
 
 			foreach ($times as $time) {
 				if ($result['l_'.$time] !== 0) {
-					$width_float[$time] = (float) ($result['l_'.$time] / $result['l_total']) * 50;
+					$width_float[$time] = (float) ($result['l_'.$time] / $result['l_total']) * 100;
 					$width_int[$time] = (int) floor($width_float[$time]);
 					$width_remainders[$time] = $width_float[$time] - $width_int[$time];
 					$width -= $width_int[$time];
@@ -429,7 +431,7 @@ class history
 
 		$tr0 = '<colgroup><col class="pos"><col class="c"><col class="c"><col class="c"><col class="c">';
 		$tr1 = '<tr><th colspan="5">Most Talkative People by Time of Day';
-		$tr2 = '<tr><td class="pos"><td class="k">Night<br>0h - 5h<td class="k">Morning<br>6h - 11h<td class="k">Afternoon<br>12h - 17h<td class="k">Evening<br>18h - 23h';
+		$tr2 = '<tr><td class="pos"><td class="k">Night (0 - 5)<td class="k">Morning (6 - 11)<td class="k">Afternoon (12 - 17)<td class="k">Evening (18 - 23)';
 		$trx = '';
 
 		for ($i = 1; $i <= $this->maxrows_people_timeofday; $i++) {
@@ -443,7 +445,7 @@ class history
 				if (!isset(${$time}[$i]['lines'])) {
 					$trx .= '<td class="v">';
 				} else {
-					$width = round((${$time}[$i]['lines'] / $high_value) * 190);
+					$width = round((${$time}[$i]['lines'] / $high_value) * 225);
 
 					if ($width !== (float) 0) {
 						$trx .= '<td class="v">'.htmlspecialchars(${$time}[$i]['user']).' - '.number_format(${$time}[$i]['lines']).'<br><div class="'.$this->color[$time].'" style="width:'.$width.'px"></div>';

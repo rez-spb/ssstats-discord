@@ -28,10 +28,10 @@ class user
 	 */
 	private $cid = '';
 	private $color = [
-		'night' => 'b',
-		'morning' => 'g',
-		'afternoon' => 'y',
-		'evening' => 'r'];
+		'night' => 'night',
+		'morning' => 'morning',
+		'afternoon' => 'day',
+		'evening' => 'evening'];
 	private $columns_act_year = 0;
 	private $csnick = '';
 	private $datetime = [];
@@ -312,15 +312,17 @@ class user
 			. '<html>'."\n\n"
 			. '<head>'."\n"
 			. '<meta charset="utf-8">'."\n"
-			. '<title>'.htmlspecialchars($this->csnick).', seriously.</title>'."\n"
+			. '<title>Statistics for '.htmlspecialchars($this->csnick).'</title>'."\n"
 			. '<link rel="stylesheet" href="'.$this->stylesheet.'">'."\n"
 			. '<style type="text/css">'."\n"
-			. '  .act-year { width:'.(2 + ($this->columns_act_year * 34)).'px }'."\n"
+			. '  .act-year { width:'.(2 + ($this->columns_act_year * 25)).'px }'."\n"
 			. '</style>'."\n"
 			. '</head>'."\n\n"
 			. '<body><div id="container">'."\n"
-			. '<div class="info">'.($this->userpics ? $this->get_userpic($sqlite3) : '').htmlspecialchars($this->csnick).', seriously'.($mood !== '' ? ' '.htmlspecialchars($mood) : '.').'<br><br>'
-			. 'First seen on '.date('M j, Y', strtotime($date_first)).' and last seen on '.date('M j, Y', strtotime($date_last)).'.<br><br>'
+			. '<h1>Personalized page for '.htmlspecialchars($this->csnick).($mood !== '' ? ' '.htmlspecialchars($mood) : '.').'</h1>'
+			. '<h2>gathered by Rez</h2>'
+			. '<div class="info">'.($this->userpics ? $this->get_userpic($sqlite3) : '')
+			. ' First seen on '.date('M j, Y', strtotime($date_first)).' and last seen on '.date('M j, Y', strtotime($date_last)).'.<br><br>'
 			. htmlspecialchars($this->csnick).' typed '.number_format($this->l_total).' line'.($this->l_total > 1 ? 's' : '').' on <a href="'.htmlspecialchars($this->mainpage).'">'.htmlspecialchars($this->channel).'</a> &ndash; an average of '.number_format($l_avg).' line'.($l_avg > 1 ? 's' : '').' per day.<br>'
 			. 'Most active day was '.date('M j, Y', strtotime($date_l_max)).' with a total of '.number_format($l_max).' line'.($l_max > 1 ? 's' : '').' typed.</div>'."\n";
 
@@ -328,10 +330,10 @@ class user
 		 * Activity section.
 		 */
 		$this->output .= '<div class="section">Activity</div>'."\n";
-		$this->output .= $this->make_table_activity_distribution_hour($sqlite3);
 		$this->output .= $this->make_table_activity($sqlite3, 'day');
 		$this->output .= $this->make_table_activity($sqlite3, 'month');
 		$this->output .= $this->make_table_activity($sqlite3, 'year');
+		$this->output .= $this->make_table_activity_distribution_hour($sqlite3);
 		$this->output .= $this->make_table_activity_distribution_day($sqlite3);
 
 		/**
@@ -350,7 +352,7 @@ class user
 		/**
 		 * HTML Foot.
 		 */
-		$this->output .= '<div class="info">Statistics created with <a href="http://sss.dutnie.nl">superseriousstats</a> on '.date('r').'.</div>'."\n";
+		$this->output .= '<div class="info">Statistics created on '.date('r').'.</div>'."\n";
 		$this->output .= '</div></body>'."\n\n".'</html>'."\n";
 		return $this->output;
 	}
@@ -358,18 +360,18 @@ class user
 	private function make_table_activity($sqlite3, $type)
 	{
 		if ($type === 'day') {
-			$class = 'act';
-			$columns = 24;
-			$head = 'Activity by Day';
-			$query = $sqlite3->query('SELECT date, l_total, l_night, l_morning, l_afternoon, l_evening FROM ruid_activity_by_day WHERE ruid = '.$this->ruid.' AND date > \''.date('Y-m-d', mktime(0, 0, 0, $this->datetime['month'], $this->datetime['dayofmonth'] - 24, $this->datetime['year'])).'\'') or $this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
+			$class = 'act-day';
+			$columns = 30;
+			$head = 'Daily';
+			$query = $sqlite3->query('SELECT date, l_total, l_night, l_morning, l_afternoon, l_evening FROM ruid_activity_by_day WHERE ruid = '.$this->ruid.' AND date > \''.date('Y-m-d', mktime(0, 0, 0, $this->datetime['month'], $this->datetime['dayofmonth'] - 30, $this->datetime['year'])).'\'') or $this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
 
 			for ($i = $columns - 1; $i >= 0; $i--) {
 				$dates[] = date('Y-m-d', mktime(0, 0, 0, $this->datetime['month'], $this->datetime['dayofmonth'] - $i, $this->datetime['year']));
 			}
 		} elseif ($type === 'month') {
-			$class = 'act';
-			$columns = 24;
-			$head = 'Activity by Month';
+			$class = 'act-month';
+			$columns = 12;
+			$head = 'Monthly';
 			$query = $sqlite3->query('SELECT date, l_total, l_night, l_morning, l_afternoon, l_evening FROM ruid_activity_by_month WHERE ruid = '.$this->ruid.' AND date > \''.date('Y-m', mktime(0, 0, 0, $this->datetime['month'] - 24, 1, $this->datetime['year'])).'\'') or $this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
 
 			for ($i = $columns - 1; $i >= 0; $i--) {
@@ -378,8 +380,8 @@ class user
 		} elseif ($type === 'year') {
 			$class = 'act-year';
 			$columns = $this->columns_act_year;
-			$head = 'Activity by Year';
-			$query = $sqlite3->query('SELECT date, l_total, l_night, l_morning, l_afternoon, l_evening FROM ruid_activity_by_year WHERE ruid = '.$this->ruid.' AND date > \''.($this->datetime['year'] - 24).'\'') or $this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
+			$head = 'Yearly';
+			$query = $sqlite3->query('SELECT date, l_total, l_night, l_morning, l_afternoon, l_evening FROM ruid_activity_by_year WHERE ruid = '.$this->ruid.' AND date > \''.($this->datetime['year'] - 10).'\'') or $this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
 
 			for ($i = $columns - ($this->estimate ? 1 : 0) - 1; $i >= 0; $i--) {
 				$dates[] = $this->datetime['year'] - $i;
@@ -516,7 +518,7 @@ class user
 		}
 
 		$times = ['evening', 'afternoon', 'morning', 'night'];
-		$tr1 = '<tr><th colspan="7">Activity Distribution by Day';
+		$tr1 = '<tr><th colspan="7">By day, %';
 		$tr2 = '<tr class="bars">';
 		$tr3 = '<tr class="sub">';
 
@@ -527,9 +529,9 @@ class user
 				$percentage = ($l_total[$day] / $this->l_total) * 100;
 
 				if ($percentage >= 9.95) {
-					$percentage = round($percentage).'%';
+					$percentage = round($percentage);
 				} else {
-					$percentage = number_format($percentage, 1).'%';
+					$percentage = number_format($percentage, 1);
 				}
 
 				foreach ($times as $time) {
@@ -564,7 +566,7 @@ class user
 			$tr3 .= '<td'.($day === $high_day ? ' class="bold"' : '').'>'.ucfirst($day);
 		}
 
-		return '<table class="act-day">'.$tr1.$tr2.$tr3.'</table>'."\n";
+		return '<table class="act-day-distrib">'.$tr1.$tr2.$tr3.'</table>'."\n";
 	}
 
 	private function make_table_activity_distribution_hour($sqlite3)
@@ -583,7 +585,7 @@ class user
 			}
 		}
 
-		$tr1 = '<tr><th colspan="24">Activity Distribution by Hour';
+		$tr1 = '<tr><th colspan="24">By hour, %';
 		$tr2 = '<tr class="bars">';
 		$tr3 = '<tr class="sub">';
 
@@ -596,9 +598,9 @@ class user
 				$percentage = ($value / $this->l_total) * 100;
 
 				if ($percentage >= 9.95) {
-					$percentage = round($percentage).'%';
+					$percentage = round($percentage);
 				} else {
-					$percentage = number_format($percentage, 1).'%';
+					$percentage = number_format($percentage, 1);
 				}
 
 				$height = round(($value / $high_value) * 100);
@@ -669,9 +671,9 @@ class user
 			$rankings[$result['date']]['rank'] = $result['rank'];
 		}
 
-		$tr0 = '<colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"><col class="c5"><col class="c6"><col class="c7"><col class="c8"><col class="c9"><col class="c10"><col class="c11"><col class="c12">';
+		$tr0 = '<colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c12"><col class="c4"><col class="c5"><col class="c6"><col class="c7"><col class="c8"><col class="c9"><col class="c10"><col class="c11">';
 		$tr1 = '<tr><th colspan="12">'.$head;
-		$tr2 = '<tr><td class="k1-2" colspan="2">Rank<td class="k3"><td class="k4-5" colspan="2">Lines<td class="k6-7" colspan="2">Percentage<td class="k8-9" colspan="2">Lines/Day<td class="k10-11" colspan="2">Activity<td class="k12">Top Day';
+		$tr2 = '<tr><td class="k1">Rank<td class="k2"><td class="k3"><td class="k12">Top Day<td class="k4">Lines<td class="k5"><td class="k6">Percentage<td class="k7"><td class="k8">Lines/Day<td class="k9"><td class="k10">Activity<td class="k11">';
 		$trx = '';
 		krsort($rankings);
 
@@ -682,7 +684,19 @@ class user
 				$date = date('Y', strtotime($date.'-01'));
 			}
 
-			$trx .= '<tr><td class="v1">'.$values['rank'].'<td class="v2">'.(empty($values['rank_delta']) ? '' : ($values['rank_delta'] < 0 ? '<span class="red">'.$values['rank_delta'].'</span>' : '<span class="green">+'.$values['rank_delta'].'</span>')).'<td class="v3">'.$date.'<td class="v4">'.number_format($values['l_total']).'<td class="v5">'.(empty($values['l_total_delta']) ? '' : '<span class="green">+'.number_format($values['l_total_delta']).'</span>').'<td class="v6">'.number_format($values['percentage'], 2).'%<td class="v7">'.(empty($values['percentage_delta']) ? '' : ($values['percentage_delta'] < 0 ? '<span class="red">'.number_format($values['percentage_delta'], 2).'</span>' : '<span class="green">+'.number_format($values['percentage_delta'], 2).'</span>')).'<td class="v8">'.number_format($values['l_avg'], 1).'<td class="v9">'.(empty($values['l_avg_delta']) ? '' : ($values['l_avg_delta'] < 0 ? '<span class="red">'.number_format($values['l_avg_delta'], 1).'</span>' : '<span class="green">+'.number_format($values['l_avg_delta'], 1).'</span>')).'<td class="v10">'.number_format($values['activity'], 2).'%<td class="v11">'.(empty($values['activity_delta']) ? '' : ($values['activity_delta'] < 0 ? '<span class="red">'.number_format($values['activity_delta'], 2).'</span>' : '<span class="green">+'.number_format($values['activity_delta'], 2).'</span>')).'<td class="v12">'.($values['l_max'] === 0 ? '<span class="grey">n/a</span>' : number_format($values['l_max']));
+			$trx .= '<tr><td class="v1">'.$values['rank']
+				. '<td class="v2">'.(empty($values['rank_delta']) ? '' : ($values['rank_delta'] < 0 ? '<span class="red">'.$values['rank_delta'].'</span>' : '<span class="green">+'.$values['rank_delta'].'</span>'))
+				. '<td class="v3">'.$date
+				. '<td class="v12">'.($values['l_max'] === 0 ? '<span class="grey">n/a</span>' : number_format($values['l_max']))
+				. '<td class="v4">'.number_format($values['l_total'])
+				. '<td class="v5">'.(empty($values['l_total_delta']) ? '' : '<span class="green">+'.number_format($values['l_total_delta']).'</span>')
+				. '<td class="v6">'.number_format($values['percentage'], 2).'%'
+				. '<td class="v7">'.(empty($values['percentage_delta']) ? '' : ($values['percentage_delta'] < 0 ? '<span class="red">'.number_format($values['percentage_delta'], 2).'</span>' : '<span class="green">+'.number_format($values['percentage_delta'], 2).'</span>'))
+				. '<td class="v8">'.number_format($values['l_avg'], 1)
+				. '<td class="v9">'.(empty($values['l_avg_delta']) ? '' : ($values['l_avg_delta'] < 0 ? '<span class="red">'.number_format($values['l_avg_delta'], 1).'</span>' : '<span class="green">+'.number_format($values['l_avg_delta'], 1).'</span>'))
+				. '<td class="v10">'.number_format($values['activity'], 2).'%'
+				. '<td class="v11">'.(empty($values['activity_delta']) ? '' : ($values['activity_delta'] < 0 ? '<span class="red">'.number_format($values['activity_delta'], 2).'</span>' : '<span class="green">+'.number_format($values['activity_delta'], 2).'</span>'));
+				/*. '<td class="v12">'.($values['l_max'] === 0 ? '<span class="grey">n/a</span>' : number_format($values['l_max']));*/
 		}
 
 		return '<table class="rank">'.$tr0.$tr1.$tr2.$trx.'</table>'."\n";
@@ -717,7 +731,7 @@ $cid = $_GET['cid'];
 /**
  * The nick must be set, cannot be zero, empty, nor contain invalid characters.
  */
-if (empty($_GET['nick']) || !preg_match('/^[][^{}|\\\`_a-z][][^{}|\\\`_a-z0-9-]{0,31}$/i', $_GET['nick'])) {
+if (empty($_GET['nick']) || !preg_match('/^[^@^:^#]{0,64}#\d{4}$/i', $_GET['nick'])) {
 	exit('<!DOCTYPE html>'."\n\n".'<html><head><meta charset="utf-8"><title>seriously?</title><link rel="stylesheet" href="sss.css"></head><body><div id="container"><div class="error">Erroneous nickname.</div></div></body></html>'."\n");
 }
 
