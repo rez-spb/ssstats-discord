@@ -1119,9 +1119,6 @@ class html
 		}
 
 		# calculation of max height is a worse thing than calculation of everything else.
-        $high_key = '';
-        $high_value = 0;
-
         $query_height = array();
         for ($h = 0; $h <= 23; $h++) {
             for ($b = 0; $b <= 5; $b++) {
@@ -1132,6 +1129,8 @@ class html
             output::output('critical', basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
         }
 
+        $high_key = '';
+        $high_value = 0;
 		foreach ($height_result as $h_key => $h_value) {
 			if ($h_value > $high_value) {
 				$high_key = $h_key;
@@ -1144,16 +1143,11 @@ class html
 		$tr3 = '<tr class="sub">';
 
 		foreach ($hours_result as $key => $value) {
-
-			#$bin = (int) preg_replace('/^l_\d\d_/', '', $key);
-			#$h_nobin = preg_replace('/_\d$/', '', $key);
-			#$hour = (int) preg_replace('/^l_0?/', '', $h_nobin);
 			$hour = (int) preg_replace('/^l_0?/', '', $key);
 
 			if ($value === 0) {
 				$tr2 .= '<td><span class="grey">n/a</span>';
 			} else {
-
                 # make another query per hour
                 $query_bins = array();
                 for ($b = 0; $b <= 5; $b++) {
@@ -1173,7 +1167,6 @@ class html
                 }
 
                 $percentage = ($value / $this->l_total) * 100;
-
                 if ($percentage >= 9.95) {
                     $percentage = round($percentage).'';
                 } else {
