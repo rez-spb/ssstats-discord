@@ -1109,23 +1109,19 @@ class html
 
 	private function make_table_activity_distribution_hour($sqlite3)
 	{
-	    $compose_query = array();
+	    $query_hours = array();
         for ($h = 0; $h <= 23; $h++) {
-            # disable full hours for precision mode
-            #array_push($compose_query, "SUM(l_" . sprintf('%02d', $h) . ") AS l_" . sprintf('%02d', $h));
-            for ($b = 0; $b <= 5; $b++) {
-                array_push($compose_query, "SUM(l_" . sprintf('%02d', $h) . "_" . $b . ") AS l_" . sprintf('%02d', $h) . "_" . $b);
-            }
+            # only full hours are here
+            array_push($query_hours, "SUM(l_" . sprintf('%02d', $h) . ") AS l_" . sprintf('%02d', $h));
         }
-		#if (($result = $sqlite3->querySingle('SELECT SUM(l_00) AS l_00, SUM(l_01) AS l_01, SUM(l_02) AS l_02, SUM(l_03) AS l_03, SUM(l_04) AS l_04, SUM(l_05) AS l_05, SUM(l_06) AS l_06, SUM(l_07) AS l_07, SUM(l_08) AS l_08, SUM(l_09) AS l_09, SUM(l_10) AS l_10, SUM(l_11) AS l_11, SUM(l_12) AS l_12, SUM(l_13) AS l_13, SUM(l_14) AS l_14, SUM(l_15) AS l_15, SUM(l_16) AS l_16, SUM(l_17) AS l_17, SUM(l_18) AS l_18, SUM(l_19) AS l_19, SUM(l_20) AS l_20, SUM(l_21) AS l_21, SUM(l_22) AS l_22, SUM(l_23) AS l_23 FROM channel_activity', true)) === false) {
-		if (($result = $sqlite3->querySingle('SELECT '.implode(', ', $compose_query).' FROM channel_activity', true)) === false) {
+		if (($hours_result = $sqlite3->querySingle('SELECT '.implode(', ', $query_hours).' FROM channel_activity', true)) === false) {
 			output::output('critical', basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
 		}
 
 		$high_key = '';
 		$high_value = 0;
 
-		foreach ($result as $key => $value) {
+		foreach ($hours_result as $key => $value) {
 			if ($value > $high_value) {
 				$high_key = $key;
 				$high_value = $value;
@@ -1136,40 +1132,55 @@ class html
 		$tr2 = '<tr class="bars">';
 		$tr3 = '<tr class="sub">';
 
-		foreach ($result as $key => $value) {
-			$bin = (int) preg_replace('/^l_\d\d_/', '', $key);
-			$h_nobin = preg_replace('/_\d$/', '', $key);
-			$hour = (int) preg_replace('/^l_0?/', '', $h_nobin);
+		foreach ($hours_result as $key => $value) {
+
+			#$bin = (int) preg_replace('/^l_\d\d_/', '', $key);
+			#$h_nobin = preg_replace('/_\d$/', '', $key);
+			#$hour = (int) preg_replace('/^l_0?/', '', $h_nobin);
+			$hour = (int) preg_replace('/^l_0?/', '', $key);
 
 			if ($value === 0) {
 				$tr2 .= '<td><span class="grey">n/a</span>';
 			} else {
-				$percentage = ($value / $this->l_total) * 100;
 
-				if ($percentage >= 9.95) {
-					$percentage = round($percentage).'';
-				} else {
-					$percentage = number_format($percentage, 1).'';
-				}
+                # make another query per hour
+                $query_bins = array();
+                for ($b = 0; $b <= 5; $b++) {
+                    array_push($query_bins, "SUM(l_" . sprintf('%02d', $key) . "_" . $b . ") AS l_" . sprintf('%02d', $key) . "_" . $b);
+                }
+                if (($bins_result = $sqlite3->querySingle('SELECT '.implode(', ', $query_bins).' FROM channel_activity', true)) === false) {
+                    output::output('critical', basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
+                }
 
-				$height = round(($value / $high_value) * 100);
-				$tr2 .= '<td><ul><li class="num" style="height:'.($height + 14).'px">'.$percentage;
+                foreach ($bins_result as $b_key => $b_value) {
+                    $percentage = ($b_value / $this->l_total) * 100;
 
-				if ($height !== (float) 0) {
-					if ($hour >= 0 && $hour <= 5) {
-						$time = 'night';
-					} elseif ($hour >= 6 && $hour <= 11) {
-						$time = 'morning';
-					} elseif ($hour >= 12 && $hour <= 17) {
-						$time = 'afternoon';
-					} elseif ($hour >= 18 && $hour <= 23) {
-						$time = 'evening';
-					}
+                    if ($percentage >= 9.95) {
+                        $percentage = round($percentage).'';
+                    } else {
+                        $percentage = number_format($percentage, 1).'';
+                    }
+                    $height = round(($b_value / $high_value) * 100);
 
-					$tr2 .= '<li class="'.$this->color[$time].'" style="height:'.$height.'px" title="'.number_format($value).'">';
-				}
+                    $tr2 .= '<td><ul><li class="num" style="height:'.($height + 14).'px">'.$percentage;
 
-				$tr2 .= '</ul>';
+                    if ($height !== (float) 0) {
+                        if ($hour >= 0 && $hour <= 5) {
+                            $time = 'night';
+                        } elseif ($hour >= 6 && $hour <= 11) {
+                            $time = 'morning';
+                        } elseif ($hour >= 12 && $hour <= 17) {
+                            $time = 'afternoon';
+                        } elseif ($hour >= 18 && $hour <= 23) {
+                            $time = 'evening';
+                        }
+
+                        $tr2 .= '<li class="'.$this->color[$time].'" style="height:'.$height.'px" title="'.number_format($b_value).'">';
+                    }
+
+                    $tr2 .= '</ul>';
+                }
+
 			}
 
 			$tr3 .= '<td'.($key === $high_key ? ' class="bold"' : '').'>'.$hour.'';
