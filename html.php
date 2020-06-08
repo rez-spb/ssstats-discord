@@ -1163,17 +1163,19 @@ class html
                     output::output('critical', basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
                 }
 
-                foreach ($bins_result as $b_key => $b_value) {
-                    $percentage = ($b_value / $this->l_total) * 100;
+                $percentage = ($value / $this->l_total) * 100;
 
-                    if ($percentage >= 9.95) {
-                        $percentage = round($percentage).'';
-                    } else {
-                        $percentage = number_format($percentage, 1).'';
-                    }
+                if ($percentage >= 9.95) {
+                    $percentage = round($percentage).'';
+                } else {
+                    $percentage = number_format($percentage, 1).'';
+                }
+
+                $bin_number = 0;
+                foreach ($bins_result as $b_key => $b_value) {
                     $height = round(($b_value / $high_value) * 100);
 
-                    $tr2 .= '<td><ul><li class="num" style="height:'.($height + 14).'px">'.$percentage;
+                    $tr2 .= '<td><ul><li class="num" style="height:'.($height + 14).'px">'.($bin_number ? '' : $percentage);
 
                     if ($height !== (float) 0) {
                         if ($hour >= 0 && $hour <= 5) {
@@ -1190,6 +1192,7 @@ class html
                     }
 
                     $tr2 .= '</ul>';
+                    $bin_number++;
                 }
 
 			}
