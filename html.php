@@ -1157,7 +1157,7 @@ class html
                 # make another query per hour
                 $query_bins = array();
                 for ($b = 0; $b <= 5; $b++) {
-                    array_push($query_bins, "SUM(l_" . sprintf('%02d', $key) . "_" . $b . ") AS l_" . sprintf('%02d', $key) . "_" . $b);
+                    array_push($query_bins, "SUM(l_" . sprintf('%02d', $hour) . "_" . $b . ") AS l_" . sprintf('%02d', $hour) . "_" . $b);
                 }
                 if (($bins_result = $sqlite3->querySingle('SELECT '.implode(', ', $query_bins).' FROM channel_activity', true)) === false) {
                     output::output('critical', basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
