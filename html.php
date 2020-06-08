@@ -1112,23 +1112,33 @@ class html
 	    $query_hours = array();
         for ($h = 0; $h <= 23; $h++) {
             # only full hours are here
-            array_push($query_hours, "SUM(l_" . sprintf('%02d', $h) . ") AS l_" . sprintf('%02d', $h));
+            array_push($query_hours, "SUM(l_".sprintf('%02d', $h).") AS l_".sprintf('%02d', $h));
         }
 		if (($hours_result = $sqlite3->querySingle('SELECT '.implode(', ', $query_hours).' FROM channel_activity', true)) === false) {
 			output::output('critical', basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
 		}
 
-		$high_key = '';
-		$high_value = 0;
+		# calculation of max height is a worse thing than calculation of everything else.
+        $high_key = '';
+        $high_value = 0;
 
-		foreach ($hours_result as $key => $value) {
-			if ($value > $high_value) {
-				$high_key = $key;
-				$high_value = $value;
+        for ($h = 0; $h <= 23; $h++) {
+            for ($b = 0; $b <= 5; $b++) {
+                array_push($query_height, "SUM(l_".sprintf('%02d', $h)."_".$b.") AS l_".sprintf('%02d', $h)."_".$b);
+            }
+        }
+        if (($height_result = $sqlite3->querySingle('SELECT '.implode(', ', $query_height).' FROM channel_activity', true)) === false) {
+            output::output('critical', basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
+        }
+
+		foreach ($height_result as $h_key => $h_value) {
+			if ($h_value > $high_value) {
+				$high_key = $h_key;
+				$high_value = $h_value;
 			}
 		}
 
-		$tr1 = '<tr><th colspan="24">By hour, %';
+		$tr1 = '<tr><th colspan="144">By hour, %';
 		$tr2 = '<tr class="bars">';
 		$tr3 = '<tr class="sub">';
 
@@ -1183,7 +1193,7 @@ class html
 
 			}
 
-			$tr3 .= '<td'.($key === $high_key ? ' class="bold"' : '').'>'.$hour.'';
+			$tr3 .= '<td colspan="6"'.($key === $high_key ? ' class="bold"' : '').'>'.$hour.'';
 		}
 
 		return '<table class="act">'.$tr1.$tr2.$tr3.'</table>'."\n";
