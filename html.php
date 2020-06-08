@@ -1122,6 +1122,7 @@ class html
         $high_key = '';
         $high_value = 0;
 
+        $query_height = array();
         for ($h = 0; $h <= 23; $h++) {
             for ($b = 0; $b <= 5; $b++) {
                 array_push($query_height, "SUM(l_".sprintf('%02d', $h)."_".$b.") AS l_".sprintf('%02d', $h)."_".$b);
