@@ -1111,7 +1111,8 @@ class html
 	{
 	    $compose_query = array();
         for ($h = 0; $h <= 23; $h++) {
-            array_push($compose_query, "SUM(l_" . sprintf('%02d', $h) . ") AS l_" . sprintf('%02d', $h));
+            # disable full hours for precision mode
+            #array_push($compose_query, "SUM(l_" . sprintf('%02d', $h) . ") AS l_" . sprintf('%02d', $h));
             for ($b = 0; $b <= 5; $b++) {
                 array_push($compose_query, "SUM(l_" . sprintf('%02d', $h) . "_" . $b . ") AS l_" . sprintf('%02d', $h) . "_" . $b);
             }
