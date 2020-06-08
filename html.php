@@ -1167,7 +1167,7 @@ class html
                 $height_max = 0;
                 foreach ($bins_result as $b_key => $b_value) {
                     $height = round(($b_value / $high_value) * 100);
-                    if ($height < $height_max) {
+                    if ($height > $height_max) {
                         $height_max = $height;
                     }
                 }
