@@ -1163,6 +1163,15 @@ class html
                     output::output('critical', basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
                 }
 
+                # additional height calculation as max of 6 bins
+                $height_max = 0;
+                foreach ($bins_result as $b_key => $b_value) {
+                    $height = round(($b_value / $high_value) * 100);
+                    if ($height < $height_max) {
+                        $height_max = $height;
+                    }
+                }
+
                 $percentage = ($value / $this->l_total) * 100;
 
                 if ($percentage >= 9.95) {
@@ -1175,7 +1184,8 @@ class html
                 foreach ($bins_result as $b_key => $b_value) {
                     $height = round(($b_value / $high_value) * 100);
 
-                    $tr2 .= '<td><ul><li class="num" style="height:'.($height + 14).'px">'.($bin_number ? '' : $percentage);
+                    # use height_max for percentage
+                    $tr2 .= '<td><ul><li class="num" style="height:'.($height_max + 14).'px">'.($bin_number ? '' : $percentage);
 
                     if ($height !== (float) 0) {
                         if ($hour >= 0 && $hour <= 5) {
