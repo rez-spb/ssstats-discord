@@ -1109,7 +1109,15 @@ class html
 
 	private function make_table_activity_distribution_hour($sqlite3)
 	{
-		if (($result = $sqlite3->querySingle('SELECT SUM(l_00) AS l_00, SUM(l_01) AS l_01, SUM(l_02) AS l_02, SUM(l_03) AS l_03, SUM(l_04) AS l_04, SUM(l_05) AS l_05, SUM(l_06) AS l_06, SUM(l_07) AS l_07, SUM(l_08) AS l_08, SUM(l_09) AS l_09, SUM(l_10) AS l_10, SUM(l_11) AS l_11, SUM(l_12) AS l_12, SUM(l_13) AS l_13, SUM(l_14) AS l_14, SUM(l_15) AS l_15, SUM(l_16) AS l_16, SUM(l_17) AS l_17, SUM(l_18) AS l_18, SUM(l_19) AS l_19, SUM(l_20) AS l_20, SUM(l_21) AS l_21, SUM(l_22) AS l_22, SUM(l_23) AS l_23 FROM channel_activity', true)) === false) {
+	    $compose_query = array();
+        for ($h = 0; $h <= 23; $h++) {
+            array_push($compose_query, "SUM(l_" . sprintf('%02d', $h) . ") AS l_" . sprintf('%02d', $h));
+            for ($b = 0; $b <= 5; $b++) {
+                array_push($compose_query, "SUM(l_" . sprintf('%02d', $h) . "_" . $b . ") AS l_" . sprintf('%02d', $h) . "_" . $b);
+            }
+        }
+		#if (($result = $sqlite3->querySingle('SELECT SUM(l_00) AS l_00, SUM(l_01) AS l_01, SUM(l_02) AS l_02, SUM(l_03) AS l_03, SUM(l_04) AS l_04, SUM(l_05) AS l_05, SUM(l_06) AS l_06, SUM(l_07) AS l_07, SUM(l_08) AS l_08, SUM(l_09) AS l_09, SUM(l_10) AS l_10, SUM(l_11) AS l_11, SUM(l_12) AS l_12, SUM(l_13) AS l_13, SUM(l_14) AS l_14, SUM(l_15) AS l_15, SUM(l_16) AS l_16, SUM(l_17) AS l_17, SUM(l_18) AS l_18, SUM(l_19) AS l_19, SUM(l_20) AS l_20, SUM(l_21) AS l_21, SUM(l_22) AS l_22, SUM(l_23) AS l_23 FROM channel_activity', true)) === false) {
+		if (($result = $sqlite3->querySingle('SELECT '.implode(', ', $compose_query).' FROM channel_activity', true)) === false) {
 			output::output('critical', basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
 		}
 
@@ -1128,7 +1136,9 @@ class html
 		$tr3 = '<tr class="sub">';
 
 		foreach ($result as $key => $value) {
-			$hour = (int) preg_replace('/^l_0?/', '', $key);
+			$bin = (int) preg_replace('/^l_\d\d_/', '', $key);
+			$h_nobin = preg_replace('/_\d$/', '', $key);
+			$hour = (int) preg_replace('/^l_0?/', '', $h_nobin);
 
 			if ($value === 0) {
 				$tr2 .= '<td><span class="grey">n/a</span>';

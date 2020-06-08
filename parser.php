@@ -19,30 +19,176 @@ class parser
 	private $date = '';
 	private $hex_latin1supplement = '[\x80-\xFF]';
 	private $hex_validutf8 = '([\x00-\x7F]|[\xC2-\xDF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF]|[\xE1-\xEC\xEE\xEF][\x80-\xBF]{2}|\xED[\x80-\x9F][\x80-\xBF]|\xF0[\x90-\xBF][\x80-\xBF]{2}|[\xF1-\xF3][\x80-\xBF]{3}|\xF4[\x80-\x8F][\x80-\xBF]{2})';
-	private $l_00 = 0;
+
+    private $l_00 = 0;
+	private $l_00_0 = 0;
+	private $l_00_1 = 0;
+	private $l_00_2 = 0;
+	private $l_00_3 = 0;
+	private $l_00_4 = 0;
+	private $l_00_5 = 0;
 	private $l_01 = 0;
-	private $l_02 = 0;
-	private $l_03 = 0;
-	private $l_04 = 0;
-	private $l_05 = 0;
-	private $l_06 = 0;
-	private $l_07 = 0;
-	private $l_08 = 0;
-	private $l_09 = 0;
-	private $l_10 = 0;
-	private $l_11 = 0;
-	private $l_12 = 0;
-	private $l_13 = 0;
-	private $l_14 = 0;
-	private $l_15 = 0;
-	private $l_16 = 0;
-	private $l_17 = 0;
-	private $l_18 = 0;
-	private $l_19 = 0;
-	private $l_20 = 0;
-	private $l_21 = 0;
-	private $l_22 = 0;
-	private $l_23 = 0;
+	private $l_01_0 = 0;
+	private $l_01_1 = 0;
+	private $l_01_2 = 0;
+	private $l_01_3 = 0;
+	private $l_01_4 = 0;
+	private $l_01_5 = 0;
+    private $l_02 = 0;
+    private $l_02_0 = 0;
+    private $l_02_1 = 0;
+    private $l_02_2 = 0;
+    private $l_02_3 = 0;
+    private $l_02_4 = 0;
+    private $l_02_5 = 0;
+    private $l_03 = 0;
+    private $l_03_0 = 0;
+    private $l_03_1 = 0;
+    private $l_03_2 = 0;
+    private $l_03_3 = 0;
+    private $l_03_4 = 0;
+    private $l_03_5 = 0;
+    private $l_04 = 0;
+    private $l_04_0 = 0;
+    private $l_04_1 = 0;
+    private $l_04_2 = 0;
+    private $l_04_3 = 0;
+    private $l_04_4 = 0;
+    private $l_04_5 = 0;
+    private $l_05 = 0;
+    private $l_05_0 = 0;
+    private $l_05_1 = 0;
+    private $l_05_2 = 0;
+    private $l_05_3 = 0;
+    private $l_05_4 = 0;
+    private $l_05_5 = 0;
+    private $l_06 = 0;
+    private $l_06_0 = 0;
+    private $l_06_1 = 0;
+    private $l_06_2 = 0;
+    private $l_06_3 = 0;
+    private $l_06_4 = 0;
+    private $l_06_5 = 0;
+    private $l_07 = 0;
+    private $l_07_0 = 0;
+    private $l_07_1 = 0;
+    private $l_07_2 = 0;
+    private $l_07_3 = 0;
+    private $l_07_4 = 0;
+    private $l_07_5 = 0;
+    private $l_08 = 0;
+    private $l_08_0 = 0;
+    private $l_08_1 = 0;
+    private $l_08_2 = 0;
+    private $l_08_3 = 0;
+    private $l_08_4 = 0;
+    private $l_08_5 = 0;
+    private $l_09 = 0;
+    private $l_09_0 = 0;
+    private $l_09_1 = 0;
+    private $l_09_2 = 0;
+    private $l_09_3 = 0;
+    private $l_09_4 = 0;
+    private $l_09_5 = 0;
+    private $l_10 = 0;
+    private $l_10_0 = 0;
+    private $l_10_1 = 0;
+    private $l_10_2 = 0;
+    private $l_10_3 = 0;
+    private $l_10_4 = 0;
+    private $l_10_5 = 0;
+    private $l_11 = 0;
+    private $l_11_0 = 0;
+    private $l_11_1 = 0;
+    private $l_11_2 = 0;
+    private $l_11_3 = 0;
+    private $l_11_4 = 0;
+    private $l_11_5 = 0;
+    private $l_12 = 0;
+    private $l_12_0 = 0;
+    private $l_12_1 = 0;
+    private $l_12_2 = 0;
+    private $l_12_3 = 0;
+    private $l_12_4 = 0;
+    private $l_12_5 = 0;
+    private $l_13 = 0;
+    private $l_13_0 = 0;
+    private $l_13_1 = 0;
+    private $l_13_2 = 0;
+    private $l_13_3 = 0;
+    private $l_13_4 = 0;
+    private $l_13_5 = 0;
+    private $l_14 = 0;
+    private $l_14_0 = 0;
+    private $l_14_1 = 0;
+    private $l_14_2 = 0;
+    private $l_14_3 = 0;
+    private $l_14_4 = 0;
+    private $l_14_5 = 0;
+    private $l_15 = 0;
+    private $l_15_0 = 0;
+    private $l_15_1 = 0;
+    private $l_15_2 = 0;
+    private $l_15_3 = 0;
+    private $l_15_4 = 0;
+    private $l_15_5 = 0;
+    private $l_16 = 0;
+    private $l_16_0 = 0;
+    private $l_16_1 = 0;
+    private $l_16_2 = 0;
+    private $l_16_3 = 0;
+    private $l_16_4 = 0;
+    private $l_16_5 = 0;
+    private $l_17 = 0;
+    private $l_17_0 = 0;
+    private $l_17_1 = 0;
+    private $l_17_2 = 0;
+    private $l_17_3 = 0;
+    private $l_17_4 = 0;
+    private $l_17_5 = 0;
+    private $l_18 = 0;
+    private $l_18_0 = 0;
+    private $l_18_1 = 0;
+    private $l_18_2 = 0;
+    private $l_18_3 = 0;
+    private $l_18_4 = 0;
+    private $l_18_5 = 0;
+    private $l_19 = 0;
+    private $l_19_0 = 0;
+    private $l_19_1 = 0;
+    private $l_19_2 = 0;
+    private $l_19_3 = 0;
+    private $l_19_4 = 0;
+    private $l_19_5 = 0;
+    private $l_20 = 0;
+    private $l_20_0 = 0;
+    private $l_20_1 = 0;
+    private $l_20_2 = 0;
+    private $l_20_3 = 0;
+    private $l_20_4 = 0;
+    private $l_20_5 = 0;
+    private $l_21 = 0;
+    private $l_21_0 = 0;
+    private $l_21_1 = 0;
+    private $l_21_2 = 0;
+    private $l_21_3 = 0;
+    private $l_21_4 = 0;
+    private $l_21_5 = 0;
+    private $l_22 = 0;
+    private $l_22_0 = 0;
+    private $l_22_1 = 0;
+    private $l_22_2 = 0;
+    private $l_22_3 = 0;
+    private $l_22_4 = 0;
+    private $l_22_5 = 0;
+    private $l_23 = 0;
+    private $l_23_0 = 0;
+    private $l_23_1 = 0;
+    private $l_23_2 = 0;
+    private $l_23_3 = 0;
+    private $l_23_4 = 0;
+    private $l_23_5 = 0;
+
 	private $l_afternoon = 0;
 	private $l_evening = 0;
 	private $l_morning = 0;
@@ -550,6 +696,10 @@ class parser
 		$day = strtolower(date('D', strtotime($this->date)));
 		$hour_leadingzero = substr($time, 0, 2);
 		$hour = (int) $hour_leadingzero;
+		# add 10minute 'bin' for more precision
+        # this will be added to DB only in addition to basic hours
+        # takes only 1st digit, so 00-09 mins get to 0, 10-19 to 1 etc.
+		$min_bin = substr($time, 3, 1);
 
 		if ($hour >= 0 && $hour <= 5) {
 			$this->l_night++;
@@ -572,6 +722,8 @@ class parser
 		$this->nick_objs[$nick]->add_value('l_'.$hour_leadingzero, 1);
 		$this->nick_objs[$nick]->add_value('l_total', 1);
 		$this->{'l_'.$hour_leadingzero}++;
+		# add, format: 'l_HH_[0-5]
+		$this->{'l_'.$hour_leadingzero.'_'.$min_bin}++;
 		$this->l_total++;
 
 		/**
@@ -782,7 +934,19 @@ class parser
 		 * Write channel totals to database.
 		 */
 		if ($this->l_total !== 0) {
-			$queryparts = $this->get_queryparts($sqlite3, ['l_00', 'l_01', 'l_02', 'l_03', 'l_04', 'l_05', 'l_06', 'l_07', 'l_08', 'l_09', 'l_10', 'l_11', 'l_12', 'l_13', 'l_14', 'l_15', 'l_16', 'l_17', 'l_18', 'l_19', 'l_20', 'l_21', 'l_22', 'l_23', 'l_night', 'l_morning', 'l_afternoon', 'l_evening', 'l_total']);
+		    $lines_list = array();
+		    for ($h = 0; $h <= 23; $h++) {
+		        # old values by hour
+		        array_push($lines_list, "l_".sprintf('%02d', $h));
+		        for ($b = 0; $b <= 5; $b++) {
+		            # new high precision 10minute bins
+		            array_push($lines_list, "l_".sprintf('%02d', $h)."_".$b);
+                }
+            }
+            $add_list = ['l_night', 'l_morning', 'l_afternoon', 'l_evening', 'l_total'];
+            array_push($lines_list, ...$add_list);
+			#$queryparts = $this->get_queryparts($sqlite3, ['l_00', 'l_01', 'l_02', 'l_03', 'l_04', 'l_05', 'l_06', 'l_07', 'l_08', 'l_09', 'l_10', 'l_11', 'l_12', 'l_13', 'l_14', 'l_15', 'l_16', 'l_17', 'l_18', 'l_19', 'l_20', 'l_21', 'l_22', 'l_23', 'l_night', 'l_morning', 'l_afternoon', 'l_evening', 'l_total']);
+			$queryparts = $this->get_queryparts($sqlite3, $lines_list);
 			$sqlite3->exec('INSERT OR IGNORE INTO channel_activity (date, '.implode(', ', $queryparts['columns']).') VALUES (\''.$this->date.'\', '.implode(', ', $queryparts['values']).')') or output::output('critical', basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
 			$sqlite3->exec('UPDATE channel_activity SET '.implode(', ', $queryparts['update-assignments']).' WHERE CHANGES() = 0 AND date = \''.$this->date.'\'') or output::output('critical', basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
 		}
