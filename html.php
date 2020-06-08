@@ -1146,7 +1146,7 @@ class html
 			$hour = (int) preg_replace('/^l_0?/', '', $key);
 
 			if ($value === 0) {
-				$tr2 .= '<td><span class="grey">n/a</span>';
+				$tr2 .= '<td colspan="6"><span class="grey">n/a</span>';
 			} else {
                 # make another query per hour
                 $query_bins = array();
