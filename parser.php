@@ -723,6 +723,7 @@ class parser
 		$this->nick_objs[$nick]->add_value('l_total', 1);
 		$this->{'l_'.$hour_leadingzero}++;
 		# add, format: 'l_HH_[0-5]
+        $this->nick_objs[$nick]->add_value('l_'.$hour_leadingzero.'_'.$min_bin, 1);
 		$this->{'l_'.$hour_leadingzero.'_'.$min_bin}++;
 		$this->l_total++;
 
