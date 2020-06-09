@@ -571,59 +571,101 @@ class user
 
 	private function make_table_activity_distribution_hour($sqlite3)
 	{
-		if (($result = $sqlite3->querySingle('SELECT l_00, l_01, l_02, l_03, l_04, l_05, l_06, l_07, l_08, l_09, l_10, l_11, l_12, l_13, l_14, l_15, l_16, l_17, l_18, l_19, l_20, l_21, l_22, l_23 FROM ruid_lines WHERE ruid = '.$this->ruid, true)) === false) {
+	    $query_hours = array();
+        for ($h = 0; $h <= 23; $h++) {
+            # only full hours are here
+            #array_push($query_hours, "SUM(l_".sprintf('%02d', $h).") AS l_".sprintf('%02d', $h));
+            array_push($query_hours, "l_".sprintf('%02d', $h));
+        }
+		if (($hours_result = $sqlite3->querySingle('SELECT '.implode(', ', $query_hours).' FROM ruid_lines WHERE ruid = '.$this->ruid, true)) === false) {
 			$this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
 		}
-
-		$high_key = '';
-		$high_value = 0;
-
-		foreach ($result as $key => $value) {
-			if ($value > $high_value) {
-				$high_key = $key;
-				$high_value = $value;
+		
+		# calculation of max height is a worse thing than calculation of everything else.
+        $query_height = array();
+        for ($h = 0; $h <= 23; $h++) {
+            for ($b = 0; $b <= 5; $b++) {
+                #array_push($query_height, "SUM(l_".sprintf('%02d', $h)."_".$b.") AS l_".sprintf('%02d', $h)."_".$b);
+                array_push($query_height, "l_".sprintf('%02d', $h)."_".$b);
+            }
+        }
+        if (($height_result = $sqlite3->querySingle('SELECT '.implode(', ', $query_height).' FROM ruid_lines WHERE ruid = '.$this->ruid, true)) === false) {
+            $this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
+        }
+		
+        $high_key = '';
+        $high_value = 0;
+		foreach ($height_result as $h_key => $h_value) {
+			if ($h_value > $high_value) {
+				$high_key = $h_key;
+				$high_value = $h_value;
 			}
 		}
 
-		$tr1 = '<tr><th colspan="24">By hour, %';
+		$tr1 = '<tr><th colspan="144">By hour, %';
 		$tr2 = '<tr class="bars">';
 		$tr3 = '<tr class="sub">';
 
-		foreach ($result as $key => $value) {
+		foreach ($hours_result as $key => $value) {
 			$hour = (int) preg_replace('/^l_0?/', '', $key);
 
 			if ($value === 0) {
-				$tr2 .= '<td><span class="grey">n/a</span>';
+				$tr2 .= '<td colspan="6"><span class="grey">n/a</span>';
 			} else {
-				$percentage = ($value / $this->l_total) * 100;
+                # make another query per hour
+                $query_bins = array();
+                for ($b = 0; $b <= 5; $b++) {
+                    #array_push($query_bins, "SUM(l_" . sprintf('%02d', $hour) . "_" . $b . ") AS l_" . sprintf('%02d', $hour) . "_" . $b);
+                    array_push($query_bins, "l_".sprintf('%02d', $hour)."_".$b);
+                }
+                if (($bins_result = $sqlite3->querySingle('SELECT '.implode(', ', $query_bins).' FROM ruid_lines WHERE ruid = '.$this->ruid, true)) === false) {
+                    $this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
+                }
+				
+                # additional height calculation as max of 6 bins
+                $height_max = 0;
+                foreach ($bins_result as $b_key => $b_value) {
+                    $height = round(($b_value / $high_value) * 100);
+                    if ($height > $height_max) {
+                        $height_max = $height;
+                    }
+                }
+				
+                $percentage = ($value / $this->l_total) * 100;
+                if ($percentage >= 9.95) {
+                    $percentage = round($percentage).'';
+                } else {
+                    $percentage = number_format($percentage, 1).'';
+                }
 
-				if ($percentage >= 9.95) {
-					$percentage = round($percentage);
-				} else {
-					$percentage = number_format($percentage, 1);
-				}
+                $bin_number = 0;
+                foreach ($bins_result as $b_key => $b_value) {
+                    $height = round(($b_value / $high_value) * 100);
 
-				$height = round(($value / $high_value) * 100);
-				$tr2 .= '<td><ul><li class="num" style="height:'.($height + 14).'px">'.$percentage;
+                    # use height_max for percentage
+                    $tr2 .= '<td><ul><li class="num" style="height:'.($height_max + 14).'px">'.($bin_number ? '' : $percentage);
 
-				if ($height !== (float) 0) {
-					if ($hour >= 0 && $hour <= 5) {
-						$time = 'night';
-					} elseif ($hour >= 6 && $hour <= 11) {
-						$time = 'morning';
-					} elseif ($hour >= 12 && $hour <= 17) {
-						$time = 'afternoon';
-					} elseif ($hour >= 18 && $hour <= 23) {
-						$time = 'evening';
-					}
+                    if ($height !== (float) 0) {
+                        if ($hour >= 0 && $hour <= 5) {
+                            $time = 'night';
+                        } elseif ($hour >= 6 && $hour <= 11) {
+                            $time = 'morning';
+                        } elseif ($hour >= 12 && $hour <= 17) {
+                            $time = 'afternoon';
+                        } elseif ($hour >= 18 && $hour <= 23) {
+                            $time = 'evening';
+                        }
 
-					$tr2 .= '<li class="'.$this->color[$time].'" style="height:'.$height.'px" title="'.number_format($value).'">';
-				}
+                        $tr2 .= '<li class="'.$this->color[$time].'" style="height:'.$height.'px" title="'.number_format($b_value).'">';
+                    }
 
-				$tr2 .= '</ul>';
+                    $tr2 .= '</ul>';
+                    $bin_number++;
+                }
+
 			}
 
-			$tr3 .= '<td'.($key === $high_key ? ' class="bold"' : '').'>'.$hour.'h';
+			$tr3 .= '<td colspan="6"'.($key === $high_key ? ' class="bold"' : '').'>'.$hour.'';
 		}
 
 		return '<table class="act">'.$tr1.$tr2.$tr3.'</table>'."\n";

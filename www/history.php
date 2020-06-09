@@ -383,41 +383,81 @@ class history
 
 	private function make_table_activity_distribution_hour($sqlite3, $type)
 	{
-	    $result = [];
+	    $query_hours = array();
+        for ($h = 0; $h <= 23; $h++) {
+            # only full hours are here
+            array_push($query_hours, "SUM(l_".sprintf('%02d', $h).") AS l_".sprintf('%02d', $h));
+        }
+		$query_hours_common = 'SELECT '.implode(', ', $query_hours).' FROM channel_activity';
+		$query_date_part = '';
+		
+	    $hours_result = [];
 	    if ($type === 'day') {
-            if (($result = $sqlite3->querySingle('SELECT SUM(l_00) AS l_00, SUM(l_01) AS l_01, SUM(l_02) AS l_02, SUM(l_03) AS l_03, SUM(l_04) AS l_04, SUM(l_05) AS l_05, SUM(l_06) AS l_06, SUM(l_07) AS l_07, SUM(l_08) AS l_08, SUM(l_09) AS l_09, SUM(l_10) AS l_10, SUM(l_11) AS l_11, SUM(l_12) AS l_12, SUM(l_13) AS l_13, SUM(l_14) AS l_14, SUM(l_15) AS l_15, SUM(l_16) AS l_16, SUM(l_17) AS l_17, SUM(l_18) AS l_18, SUM(l_19) AS l_19, SUM(l_20) AS l_20, SUM(l_21) AS l_21, SUM(l_22) AS l_22, SUM(l_23) AS l_23 FROM channel_activity WHERE date LIKE \''.date('Y-m-d', mktime(0, 0, 0, $this->datetime['month'], $this->datetime['day'], $this->datetime['year'])).'%\'', true)) === false) {
+			$query_date_part = ' WHERE date LIKE \''.date('Y-m-d', mktime(0, 0, 0, $this->datetime['month'], $this->datetime['day'], $this->datetime['year'])).'%\'';
+            if (($hours_result = $sqlite3->querySingle($query_hours_common.$query_date_part, true)) === false) {
                 $this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
             }
         } elseif ($type === 'month') {
-			if (($result = $sqlite3->querySingle('SELECT SUM(l_00) AS l_00, SUM(l_01) AS l_01, SUM(l_02) AS l_02, SUM(l_03) AS l_03, SUM(l_04) AS l_04, SUM(l_05) AS l_05, SUM(l_06) AS l_06, SUM(l_07) AS l_07, SUM(l_08) AS l_08, SUM(l_09) AS l_09, SUM(l_10) AS l_10, SUM(l_11) AS l_11, SUM(l_12) AS l_12, SUM(l_13) AS l_13, SUM(l_14) AS l_14, SUM(l_15) AS l_15, SUM(l_16) AS l_16, SUM(l_17) AS l_17, SUM(l_18) AS l_18, SUM(l_19) AS l_19, SUM(l_20) AS l_20, SUM(l_21) AS l_21, SUM(l_22) AS l_22, SUM(l_23) AS l_23 FROM channel_activity WHERE date LIKE \''.date('Y-m', mktime(0, 0, 0, $this->datetime['month'], 1, $this->datetime['year'])).'%\'', true)) === false) {
+			$query_date_part = ' WHERE date LIKE \''.date('Y-m', mktime(0, 0, 0, $this->datetime['month'], 1, $this->datetime['year'])).'%\'';
+			if (($hours_result = $sqlite3->querySingle($query_hours_common.$query_date_part, true)) === false) {
 				$this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
 			}
 		} elseif ($type === 'year') {
-			if (($result = $sqlite3->querySingle('SELECT SUM(l_00) AS l_00, SUM(l_01) AS l_01, SUM(l_02) AS l_02, SUM(l_03) AS l_03, SUM(l_04) AS l_04, SUM(l_05) AS l_05, SUM(l_06) AS l_06, SUM(l_07) AS l_07, SUM(l_08) AS l_08, SUM(l_09) AS l_09, SUM(l_10) AS l_10, SUM(l_11) AS l_11, SUM(l_12) AS l_12, SUM(l_13) AS l_13, SUM(l_14) AS l_14, SUM(l_15) AS l_15, SUM(l_16) AS l_16, SUM(l_17) AS l_17, SUM(l_18) AS l_18, SUM(l_19) AS l_19, SUM(l_20) AS l_20, SUM(l_21) AS l_21, SUM(l_22) AS l_22, SUM(l_23) AS l_23 FROM channel_activity WHERE date LIKE \''.$this->datetime['year'].'%\'', true)) === false) {
+			$query_date_part = ' WHERE date LIKE \''.$this->datetime['year'].'%\'';
+			if (($hours_result = $sqlite3->querySingle($query_hours_common.$query_date_part, true)) === false) {
 				$this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
 			}
 		}
+		
+		# calculation of max height is a worse thing than calculation of everything else.
+        $query_height = array();
+        for ($h = 0; $h <= 23; $h++) {
+            for ($b = 0; $b <= 5; $b++) {
+                array_push($query_height, "SUM(l_".sprintf('%02d', $h)."_".$b.") AS l_".sprintf('%02d', $h)."_".$b);
+            }
+        }
+        if (($height_result = $sqlite3->querySingle('SELECT '.implode(', ', $query_height).' FROM channel_activity'.$query_date_part, true)) === false) {
+            $this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
+        }
 
 		$high_key = '';
 		$high_value = 0;
 
-		foreach ($result as $key => $value) {
+		foreach ($height_result as $key => $value) {
 			if ($value > $high_value) {
 				$high_key = $key;
 				$high_value = $value;
 			}
 		}
 
-		$tr1 = '<tr><th colspan="24">By hour, %';
+		$tr1 = '<tr><th colspan="144">By hour, %';
 		$tr2 = '<tr class="bars">';
 		$tr3 = '<tr class="sub">';
 
-		foreach ($result as $key => $value) {
+		foreach ($hours_result as $key => $value) {
 			$hour = (int) preg_replace('/^l_0?/', '', $key);
 
 			if ($value === 0) {
-				$tr2 .= '<td><span class="grey">n/a</span>';
+				$tr2 .= '<td colspan="6"><span class="grey">n/a</span>';
 			} else {
+                # make another query per hour
+                $query_bins = array();
+                for ($b = 0; $b <= 5; $b++) {
+                    array_push($query_bins, "SUM(l_" . sprintf('%02d', $hour) . "_" . $b . ") AS l_" . sprintf('%02d', $hour) . "_" . $b);
+                }
+                if (($bins_result = $sqlite3->querySingle('SELECT '.implode(', ', $query_bins).' FROM channel_activity'.$query_date_part, true)) === false) {
+                    $this->output($sqlite3->lastErrorCode(), basename(__FILE__).':'.__LINE__.', sqlite3 says: '.$sqlite3->lastErrorMsg());
+                }
+				
+                # additional height calculation as max of 6 bins
+                $height_max = 0;
+                foreach ($bins_result as $b_key => $b_value) {
+                    $height = round(($b_value / $high_value) * 100);
+                    if ($height > $height_max) {
+                        $height_max = $height;
+                    }
+                }
+				
 				$percentage = ($value / $this->l_total) * 100;
 
 				if ($percentage >= 9.95) {
@@ -426,29 +466,34 @@ class history
 					$percentage = number_format($percentage, 1);
 				}
 
-				$height = round(($value / $high_value) * 100);
-				$tr2 .= '<td><ul><li class="num" style="height:'.($height + 14).'px">'.$percentage;
+                $bin_number = 0;
+                foreach ($bins_result as $b_key => $b_value) {
+                    $height = round(($b_value / $high_value) * 100);
 
-				if ($height !== (float) 0) {
-					if ($hour >= 0 && $hour <= 5) {
-						$time = 'night';
-					} elseif ($hour >= 6 && $hour <= 11) {
-						$time = 'morning';
-					} elseif ($hour >= 12 && $hour <= 17) {
-						$time = 'afternoon';
-					} elseif ($hour >= 18 && $hour <= 23) {
-						$time = 'evening';
-					} else {
-					    $time = false;
+                    # use height_max for percentage
+                    $tr2 .= '<td><ul><li class="num" style="height:'.($height_max + 14).'px">'.($bin_number ? '' : $percentage);
+
+                    if ($height !== (float) 0) {
+                        if ($hour >= 0 && $hour <= 5) {
+                            $time = 'night';
+                        } elseif ($hour >= 6 && $hour <= 11) {
+                            $time = 'morning';
+                        } elseif ($hour >= 12 && $hour <= 17) {
+                            $time = 'afternoon';
+                        } elseif ($hour >= 18 && $hour <= 23) {
+                            $time = 'evening';
+                        }
+
+                        $tr2 .= '<li class="'.$this->color[$time].'" style="height:'.$height.'px" title="'.number_format($b_value).'">';
                     }
 
-					$tr2 .= '<li class="'.$this->color[$time].'" style="height:'.$height.'px" title="'.number_format($value).'">';
-				}
+                    $tr2 .= '</ul>';
+                    $bin_number++;
+                }
 
-				$tr2 .= '</ul>';
 			}
 
-			$tr3 .= '<td'.($key === $high_key ? ' class="bold"' : '').'>'.$hour;
+			$tr3 .= '<td colspan="6"'.($key === $high_key ? ' class="bold"' : '').'>'.$hour.'';
 		}
 
 		return '<table class="act">'.$tr1.$tr2.$tr3.'</table>'."\n";
