@@ -177,6 +177,8 @@ class history
 			$this->datetime['monthname'] = date('F', mktime(0, 0, 0, $this->datetime['month'], 1, $this->datetime['year']));
 		}
 
+		$this->get_activity($sqlite3);
+		
 		/**
 		 * HTML Head.
 		 */
@@ -190,20 +192,26 @@ class history
 			. '<body><div id="container">'."\n"
 			. '<h1>Historical page for '.htmlspecialchars($this->channel).'</h1>'
 			. '<h2>gathered by Rez</h2>'
-			. '<div class="info"><a href="'.htmlspecialchars($this->mainpage).'">Main page of '.htmlspecialchars($this->channel).'</a><br/><br/>'
-			. (is_null($this->datetime['year']) ? '<span class="note">Select a year and/or month in the matrix below.</span>' : 'Displaying statistics for '.(!is_null($this->datetime['month']) ? $this->datetime['monthname'].' '.$this->datetime['year'] : 'the year '.$this->datetime['year']).'.').'</div>'."\n";
+			. '<div class="info">&lt;&lt; <a href="'.htmlspecialchars($this->mainpage).'">Main page of '.htmlspecialchars($this->channel).'</a><br/><br/>'
+			. (is_null($this->datetime['year']) ? '<span class="note">Select year and/or month in the matrix below.</span>' : 
+			   'Displaying statistics for '.(!is_null($this->datetime['day']) ? $this->datetime['day'].' ' : '').(!is_null($this->datetime['month']) ? $this->datetime['monthname'].' '.$this->datetime['year'] : 'the year '.$this->datetime['year']).'.')
+			. (!is_null($this->datetime['day']) ? ' Lines this day: '.$this->activity[$this->datetime['year']][$this->datetime['month']][$this->datetime['day']].'.' : '').'</div>'."\n";
 
 		/**
 		 * Activity section.
 		 */
-		$this->get_activity($sqlite3);
+		
 		$output .= '<div class="section">Activity</div>'."\n";
 		$output .= $this->make_index();
 
 		/**
 		 * Only call make_table_* functions for times in which there was activity.
 		 */
-		if (!is_null($this->datetime['year']) && array_key_exists($this->datetime['year'], $this->activity) && (is_null($this->datetime['month']) || array_key_exists($this->datetime['month'], $this->activity[$this->datetime['year']]))) {
+		if (
+			(!is_null($this->datetime['year']) && array_key_exists($this->datetime['year'], $this->activity)) &&
+			(is_null($this->datetime['month']) || array_key_exists($this->datetime['month'], $this->activity[$this->datetime['year']])) &&
+			(is_null($this->datetime['day']) || array_key_exists($this->datetime['day'], $this->activity[$this->datetime['year']][$this->datetime['month']]))
+			) {
 			/**
 			 * Set $l_total to the total number of lines in the specific scope.
 			 */
